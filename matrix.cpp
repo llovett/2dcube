@@ -13,47 +13,47 @@
 
 using namespace std;
 
-int main() {
-    float m2[] = {
-	1.0, 0.0, 0.0,
-	0.0, 1.0, 9.0,
-	0.0, 0.5, 1.0
-    };
-    float m1[] = {
-	0.0, 0.0, 1.0,
-	0.0, 1.0, 0.0,
-	1.0, 0.0, 0.0
-    };
-    Matrix Mat1(3,3,m1);
-    Matrix Mat2(3,3,m2);
+// int main() {
+//     float m2[] = {
+// 	1.0, 0.0, 0.0,
+// 	0.0, 1.0, 9.0,
+// 	0.0, 0.5, 1.0
+//     };
+//     float m1[] = {
+// 	0.0, 0.0, 1.0,
+// 	0.0, 1.0, 0.0,
+// 	1.0, 0.0, 0.0
+//     };
+//     Matrix Mat1(3,3,m1);
+//     Matrix Mat2(3,3,m2);
 
-    Matrix Mat3 = Mat1 + Mat2;
-    // cout << "rows: " << m.getRows() << endl;
-    // cout << "columns: " << m.getColumns() << endl;
-    // cout << "entry at [0,0]: " << m(0,0) << endl;
-    // m(0,0) = 4.0f;
-    // cout << "entry at [0,0]: " << m(0,0) << endl;
-    cout << "MATRIX 1 --------------------" << endl;
-    Mat1.print();
-    // cout << "MATRIX 2 --------------------" << endl;
-    // Mat2.print();
-    // cout << "SUM -------------------------" << endl;
-    // Mat3.print();
-    // cout << "PRODUCT ---------------------" << endl;
-    // Matrix Mat4 = Mat1 * Mat2;
-    // Mat4.print();
-    // cout << "BOTTOM-RIGHT SUB-MATRIX -----" << endl;
-    // Matrix Mat5 = Mat4.subMatrix(0,0,2,2);
-    // Mat5.print();
-    // cout << "REMOVING MIDDLE ROW ----------" << endl;
-    // Matrix Mat6 = Mat3.rowRemoved(1);
-    // Mat6.print();
-    cout << "DETERMINANT OF SECOND MATRIX -" << endl;
-    cout << Matrix::Determinant(Mat2) << endl;
+//     Matrix Mat3 = Mat1 + Mat2;
+//     // cout << "rows: " << m.getRows() << endl;
+//     // cout << "columns: " << m.getColumns() << endl;
+//     // cout << "entry at [0,0]: " << m(0,0) << endl;
+//     // m(0,0) = 4.0f;
+//     // cout << "entry at [0,0]: " << m(0,0) << endl;
+//     cout << "MATRIX 1 --------------------" << endl;
+//     Mat1.print();
+//     // cout << "MATRIX 2 --------------------" << endl;
+//     // Mat2.print();
+//     // cout << "SUM -------------------------" << endl;
+//     // Mat3.print();
+//     // cout << "PRODUCT ---------------------" << endl;
+//     // Matrix Mat4 = Mat1 * Mat2;
+//     // Mat4.print();
+//     // cout << "BOTTOM-RIGHT SUB-MATRIX -----" << endl;
+//     // Matrix Mat5 = Mat4.subMatrix(0,0,2,2);
+//     // Mat5.print();
+//     // cout << "REMOVING MIDDLE ROW ----------" << endl;
+//     // Matrix Mat6 = Mat3.rowRemoved(1);
+//     // Mat6.print();
+//     cout << "DETERMINANT OF SECOND MATRIX -" << endl;
+//     cout << Matrix::Determinant(Mat2) << endl;
 
 
-    return 0;
-}
+//     return 0;
+// }
 
 Matrix::Matrix(int rows, int columns) {
     this->init(rows,columns,NULL);

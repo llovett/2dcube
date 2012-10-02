@@ -1,6 +1,7 @@
 #include <GL/glut.h>
 #include <GL/glui.h>
 #include <math.h>
+#include "matrix.h"
 
 #define true 1
 #define false 0
@@ -19,6 +20,15 @@ GLfloat Theta = 0.0;
 GLfloat CubeSize = 3.0f;
 GLfloat EyePosX, EyePosY, EyePosZ;
 GLfloat LookAtX, LookAtY, LookAtZ;
+GLfloat CubeX, CubeY, CubeZ;
+/* matrix transforms */
+Matrix TranslateToViewer(4,4);
+Matrix Rotate1(4,4);
+Matrix Rotate2(4,4);
+Matrix Rotate3(4,4);
+Matrix FlipHandedness(4,4);
+Matrix V(4,4); /* viewer coordinate transformation */
+Matrix P(4,4); /* perspective transformation */
 
 /* constants */
 int SIDES[] = { 8, 16, 32, 64, 128 };
@@ -26,6 +36,10 @@ float SPEEDS[] = { 0.0, 0.01, 0.1, 1.0, 6.0 };
 GLfloat x=5.0, y=5.0;
 GLfloat side = 3.0;
 
+/* setupViewport(width, height)
+ * 
+ * Set up the viewport.
+ */
 void setupViewport(int w, int h) {
     glViewport(0, 0, w, h); 
     glMatrixMode(GL_MODELVIEW);
@@ -33,10 +47,53 @@ void setupViewport(int w, int h) {
     gluOrtho2D(0.0, XSCALE*w/INITIAL_WIDTH, 0.0, h*YSCALE/INITIAL_HEIGHT );
 }
 
+/* init()
+ *
+ * Set up background, clearcolor, call setupViewport(width, height).
+ */
 void init() {
     glClearColor(1.0, 1.0, 0.4, 1.0);
     glColor3f(0.5, 0.5, 0.5);
     setupViewport(INITIAL_WIDTH, INITIAL_HEIGHT);
+
+    /* initialize matrix transforms */
+
+    /* I'm assuming the following vectors are parallel with the viewer's axes:
+     *     
+     *     a, b, c
+     *     -------
+     * X: <1, 0, 0>
+     * Y: <0, 1, 0>
+     * Z: <0, 0, 1>
+     */ 
+    float r = sqrt(EyePosX*EyePosX + EyePosY*EyePosY);
+    float R = sqrt(EyePosX*EyePosX + EyePosY*EyePosY + EyePosZ*EyePosZ);
+    float h = r*R;
+    float ttv_entries[16] = { 1, 0, 0, 0,
+			      0, 1, 0, 0,
+			      0, 0, 1, 0,
+			      -EyePosX, -EyePosY, -EyePosZ, 1 };
+    TranslateToViewer << ttv_entries;
+    float rot1[16] = { 1.0f/r, 0, 0, 0,
+		       1.0f/r, 1.0f/r, 0, 0,
+		       0, 0, 1, 0,
+		       0, 0, 0, 1 };
+    Rotate1 << rot1;
+    float rot2[16] = { r/R, 0, 0, 0,
+		       0, 1, 0, 0,
+		       0, 0, r/R, 0,
+		       0, 0, 0, 1 };
+    Rotate2 << rot2;
+    float rot3[16] = { 1, 0, 0, 0,
+		       0, R/h, 0, 0,
+		       0, 0, R/h, 0,
+		       0, 0, 0, 1 };
+    Rotate3 << rot3;
+    float fh[16] = { 1, 0, 0, 0,
+		     0, -1, 0, 0,
+		     0, 0, 1, 0,
+		     0, 0, 0, 1 };
+    FlipHandedness << fh;
 }
 
 void myReshape(int w, int h) {
@@ -46,6 +103,15 @@ void myReshape(int w, int h) {
 
 GLfloat radians(float alpha) {
     return alpha*PI/180.0;
+}
+
+void computeViewerMatrix() {
+    /* transform matrix V */
+    
+}
+
+void computePerspectiveMatrix() {
+    /* transform matrix P */
 }
 
 void display(){
