@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <cstdlib>
 
 using namespace std;
 
@@ -55,6 +56,30 @@ using namespace std;
 //     return 0;
 // }
 
+int main() {
+    cout << "--------------------" << endl;
+    float dummy[] = {1,2,3};
+    Matrix test(3,1,dummy);
+    test << dummy;
+    test.print();
+    cout << "--------------------" << endl;
+
+    float arr1[] = { 1, 0, 0 };
+    float arr2[] = { 0, 1, 0 };
+    float *arr3 = crossProduct(arr1, arr2);
+
+    int i;
+    cout << "Cross-product of <1,0,0> and <0,1,0> is <";
+    for ( i=0; i<3; i++ ) {
+	cout << arr3[i];
+	if ( i < 3-1 )
+	    cout << ",";
+    }
+    cout << ">" << endl;
+    
+    return 0;
+}
+
 Matrix::Matrix(int rows, int columns) {
     this->init(rows,columns,NULL);
 }
@@ -64,8 +89,6 @@ Matrix::Matrix(int rows, int columns, float *entries ) {
 }
 
 void Matrix::init(int rows, int columns, float *entries) {
-    int entryCount = sizeof(entries)/sizeof(float);
-
     // Initialize vectors
     int i;
     this->entries.resize(rows);
@@ -76,7 +99,7 @@ void Matrix::init(int rows, int columns, float *entries) {
 	int i,j;
 	for ( i=0; i<rows; i++ ) {
 	    for ( j=0; j<columns; j++ ) {
-		this->entries[i][j] = entries[i*rows + j];
+		this->entries[i][j] = entries[i*columns + j];
 	    }
 	}
     }
@@ -234,4 +257,21 @@ void Matrix::print() const {
 	}
 	cout << "]" << endl;
     }
+}
+
+float *crossProduct(float a[3], float b[3]) {
+    Matrix vectorB = Matrix(3, 1, b);
+    float entriesSkewA[9] = { 0, -a[2], a[1],
+			      a[2], 0, -a[0],
+			      -a[1], a[0], 0 };
+    Matrix skewA = Matrix(3, 3, entriesSkewA);
+
+    Matrix resultVector = skewA * vectorB;
+    float *result = (float*)malloc(sizeof(float)*3);
+    int i;
+
+    for ( i = 0; i<3; i++ ) {
+	result[i] = resultVector(i,0);
+    }
+    return result;
 }

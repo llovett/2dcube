@@ -41,3 +41,6 @@ public:
 
 Matrix operator+(const Matrix& lhs, const Matrix& rhs);
 Matrix operator*(const Matrix& lhs, const Matrix& rhs);
+
+/* other utility functions for vectors */
+float *crossProduct(float *a, float *b);
