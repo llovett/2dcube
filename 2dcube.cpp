@@ -94,6 +94,8 @@ void init() {
 		     0, 0, 1, 0,
 		     0, 0, 0, 1 };
     FlipHandedness << fh;
+
+    V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
 }
 
 void myReshape(int w, int h) {
@@ -107,7 +109,24 @@ GLfloat radians(float alpha) {
 
 void computeViewerMatrix() {
     /* transform matrix V */
-    
+    float r = sqrt(EyePosX*EyePosX + EyePosY*EyePosY);
+    float R = sqrt(EyePosX*EyePosX + EyePosY*EyePosY + EyePosZ*EyePosZ);
+    float h = r*R;
+    TranslateToViewer(3,0) = -EyePosX;
+    TranslateToViewer(3,1) = -EyePosY;
+    TranslateToViewer(3,2) = -EyePosZ;
+
+    Rotate1(0,0) = 1.0f/r;
+    Rotate1(1,0) = 1.0f/r;
+    Rotate1(1,1) = 1.0f/r;
+
+    Rotate2(0,0) = r/R;
+    Rotate2(2,2) = r/R;
+
+    Rotate3(1,1) = R/h;
+    Rotate3(2,2) = R/h;
+
+    V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
 }
 
 void computePerspectiveMatrix() {
@@ -131,8 +150,8 @@ void display(){
 	glBegin(GL_POLYGON);
 
 	glVertex2f(x, y);
-	glVertex2f(x+side*cos(radians(baseAngle)), y+side*sin(radians(baseAngle)));
-	glVertex2f(x+side*cos(radians(baseAngle+inc)), y+side*sin(radians(baseAngle + inc)));
+	glVertex2f(x+CubeSize*cos(radians(baseAngle)), y+CubeSize*sin(radians(baseAngle)));
+	glVertex2f(x+CubeSize*cos(radians(baseAngle+inc)), y+CubeSize*sin(radians(baseAngle + inc)));
 
 	glEnd();
     }
@@ -193,24 +212,7 @@ int main(int argc, char **argv) {
     GLUI_Rollout *clippingRollout = new GLUI_Rollout(control_panel, "Clipping Parameters", false);
     GLUI_Spinner *thetaSpinner = new GLUI_Spinner(clippingRollout, "Theta", GLUI_SPINNER_FLOAT, &Theta);
     thetaSpinner->set_float_limits(0.0f, 360.0f, GLUI_LIMIT_WRAP);
-    
-    // GLUI_Rollout *speedRollout = new GLUI_Rollout(control_panel, "Speeds", false);
-    // GLUI_RadioGroup *speedsGroup = new GLUI_RadioGroup(speedRollout, &WhichSpeed, 0, speedsCallback);
-    // new GLUI_RadioButton(speedsGroup, "tree" );
-    // new GLUI_RadioButton(speedsGroup, "tortoise" );
-    // new GLUI_RadioButton(speedsGroup, "raccoon" );
-    // new GLUI_RadioButton(speedsGroup, "kangaroo" );
-    // new GLUI_RadioButton(speedsGroup, "cheetah" );
-    // speedsGroup->set_int_val(2);	// racoon by default
-    // GLUI_Rollout *sidesRollout = new GLUI_Rollout(control_panel, "Sides", false);
-    // GLUI_RadioGroup *sidesGroup = new GLUI_RadioGroup(sidesRollout, &WhichSides, 0, sidesCallback);
-    // new GLUI_RadioButton(sidesGroup, "8" );
-    // new GLUI_RadioButton(sidesGroup, "16" );
-    // new GLUI_RadioButton(sidesGroup, "32" );
-    // new GLUI_RadioButton(sidesGroup, "64" );
-    // new GLUI_RadioButton(sidesGroup, "128" );
-    // sidesGroup->set_int_val(2);		// 32 by defaultx
-    
+ 
     control_panel->set_main_gfx_window(main_window);
 
     GLUI_Master.set_glutIdleFunc(spinDisplay);
