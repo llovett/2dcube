@@ -56,29 +56,29 @@ using namespace std;
 //     return 0;
 // }
 
-int main() {
-    cout << "--------------------" << endl;
-    float dummy[] = {1,2,3};
-    Matrix test(3,1,dummy);
-    test << dummy;
-    test.print();
-    cout << "--------------------" << endl;
+// int main() {
+//     cout << "--------------------" << endl;
+//     float dummy[] = {1,2,3};
+//     Matrix test(3,1,dummy);
+//     test << dummy;
+//     test.print();
+//     cout << "--------------------" << endl;
 
-    float arr1[] = { 1, 0, 0 };
-    float arr2[] = { 0, 1, 0 };
-    float *arr3 = crossProduct(arr1, arr2);
+//     float arr1[] = { 1, 0, 0 };
+//     float arr2[] = { 0, 1, 0 };
+//     float *arr3 = crossProduct(arr1, arr2);
 
-    int i;
-    cout << "Cross-product of <1,0,0> and <0,1,0> is <";
-    for ( i=0; i<3; i++ ) {
-	cout << arr3[i];
-	if ( i < 3-1 )
-	    cout << ",";
-    }
-    cout << ">" << endl;
+//     int i;
+//     cout << "Cross-product of <1,0,0> and <0,1,0> is <";
+//     for ( i=0; i<3; i++ ) {
+// 	cout << arr3[i];
+// 	if ( i < 3-1 )
+// 	    cout << ",";
+//     }
+//     cout << ">" << endl;
     
-    return 0;
-}
+//     return 0;
+// }
 
 Matrix::Matrix(int rows, int columns) {
     this->init(rows,columns,NULL);
@@ -100,6 +100,14 @@ void Matrix::init(int rows, int columns, float *entries) {
 	for ( i=0; i<rows; i++ ) {
 	    for ( j=0; j<columns; j++ ) {
 		this->entries[i][j] = entries[i*columns + j];
+	    }
+	}
+    }
+    else {
+	int i,j;
+	for ( i=0; i<rows; i++ ) {
+	    for ( j=0; j<columns; j++ ) {
+		this->entries[i][j] = 0.0f;
 	    }
 	}
     }
