@@ -46,20 +46,26 @@ GLfloat side = 3.0;
 #define VIEW_PLANE_DIST 10.0f
 #define HITHER_PLANE_DIST 5.0f
 #define YON_PLANE_DIST 15.0f
+#define VIEWPORT_MARGIN 20.0f
 
 /* setupViewport(width, height)
  * 
  * Set up the viewport.
  */
 void setupViewport(int w, int h) {
-    glViewport(0, 0, w, h); 
+    w -= 2*VIEWPORT_MARGIN;
+    h -= 2*VIEWPORT_MARGIN;
+    glViewport(VIEWPORT_MARGIN, VIEWPORT_MARGIN, w, h); 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Wl = 0.0f;
-    Wt = 0.0f;
+    Wl = VIEWPORT_MARGIN;
+    Wt = VIEWPORT_MARGIN;
     Wr = XSCALE*w/INITIAL_WIDTH;
     Wb = h*YSCALE/INITIAL_HEIGHT;
-    gluOrtho2D(0.0, Wr, 0.0, Wb );
+    gluOrtho2D(0, Wr, 0, Wb);
+
+    /* Recompute W matrix */
+    computeWindowMatrix(0);
 }
 
 void myReshape(int w, int h) {
@@ -154,6 +160,8 @@ void computeViewerAngle(int id) {
     Ax = xvector[0];
     Ay = xvector[1];
     Az = xvector[2];
+
+    computeViewerMatrix(0);
 }
 
 /**
@@ -212,6 +220,17 @@ void display(){
     glutSetWindow(main_window);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glColor3f(0.3f, 0.0f, 0.4f);
+
+    /* drawing the viewport */
+    glBegin(GL_POLYGON);
+    glVertex2f(0, 0);
+    glVertex2f(Wr, 0);
+    glVertex2f(Wr, Wb);
+    glVertex2f(0, Wb);
+    glEnd();
+    
+
     float inc = 360.0 / sides;
     for (i=0; i<sides; i++) {
 	float baseAngle = Theta + i*inc;
@@ -246,7 +265,7 @@ int main(int argc, char **argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(INITIAL_WIDTH, INITIAL_HEIGHT);
     glutInitWindowPosition(50, 50);
-    main_window = glutCreateWindow( "Umbrella" );
+    main_window = glutCreateWindow( "2DCube" );
 
     init();
     glutDisplayFunc(display);
