@@ -20,12 +20,11 @@ int main_window;
 /* globals */
 int WhichSides;
 int WhichSpeed;
-GLfloat Theta = 0.0;
+GLfloat Theta = 40.0f;
 GLfloat CubeSize = 3.0f;
 GLfloat EyePosX, EyePosY, EyePosZ;
 GLfloat LookAtX, LookAtY, LookAtZ;
 GLfloat Wl, Wr, Wt, Wb, Vl, Vr, Vt, Vb;
-GLfloat CubeX, CubeY, CubeZ;
 GLfloat Ax, Bx, Cx, Ay, By, Cy, Az, Bz, Cz;
 
 /* matrix transforms */
@@ -47,6 +46,9 @@ GLfloat side = 3.0;
 #define HITHER_PLANE_DIST 5.0f
 #define YON_PLANE_DIST 15.0f
 #define VIEWPORT_MARGIN 20.0f
+#define CubeX 3.0
+#define CubeY 3.0
+#define CubeZ 1.0
 
 /* setupViewport(width, height)
  * 
@@ -85,6 +87,9 @@ void init() {
     glClearColor(1.0, 1.0, 0.4, 1.0);
     glColor3f(0.5, 0.5, 0.5);
     setupViewport(INITIAL_WIDTH, INITIAL_HEIGHT);
+
+    LookAtX = LookAtY = LookAtZ = 0.0f;
+    EyePosX = EyePosY = EyePosZ = 10.0f;
 
     /***** initialize matrix transforms *****/
  
@@ -130,13 +135,43 @@ void init() {
 		   0, 0, 1, 0,
 		   0, 0, 0, 1 };
     W << ws;
+    puts("This is what the matrix V is computed from:");
+    puts("Translation to the viewer:");
+    TranslateToViewer.print();
+    puts("Rotation 1:");
+    Rotate1.print();
+    puts("Rotation 2:");
+    Rotate2.print();
+    puts("Rotation 3:");
+    Rotate3.print();
+    puts("Flipping handedness:");
+    FlipHandedness.print();
+
 
     // Calculate the view pipeline for first time
     computeViewerAngle(0);
     computeViewerMatrix(0);
     computePerspectiveMatrix(0);
     computeWindowMatrix(0);
+
+
+
+
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
+
+    // puts("This is what the matrix V is computed from:");
+    // puts("Translation to the viewer:");
+    // TranslateToViewer.print();
+    // puts("Rotation 1:");
+    // Rotate1.print();
+    // puts("Rotation 2:");
+    // Rotate2.print();
+    // puts("Rotation 3:");
+    // Rotate3.print();
+    // puts("Flipping handedness:");
+    // FlipHandedness.print();
+    // puts("And V ----------");
+    // V.print();
 }
 
 /**
@@ -150,18 +185,31 @@ void computeViewerAngle(int id) {
 
     // Since the UP vector doesn't chance, we'll use that as the parallel y-vector
     Ay = 0;
-    By = 1;
-    Cy = 0;
+    By = 0;
+    Cy = 1;	// why is the z-component 1???
 
     // x-vector is cross-product of Z and UP vectors
     float zvector[] = { Az, Bz, Cz };
     float upvector[] = { Ay, By, Cy };
     float *xvector = crossProduct(zvector, upvector);
+
+    puts("Printing parallel x-vector to viewer:");
+    for ( int i=0; i<3; i++ ) {
+	printf("xvector[%d] = %f\n",i,xvector[i]);
+    }
+    
     Ax = xvector[0];
-    Ay = xvector[1];
-    Az = xvector[2];
+    Bx = xvector[1];
+    Cx = xvector[2];
 
     computeViewerMatrix(0);
+
+    puts("Printing V again:");
+    V.print();
+    puts("Here is P:");
+    P.print();
+    puts("And this is W:");
+    W.print();
 }
 
 /**
@@ -175,6 +223,9 @@ void computeWindowMatrix(int id) {
     W(1,1) = (Wt - Wb)/(Vt - Vb);
     W(0,3) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
     W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
+
+    puts("Inside of computeWindowMatrix!");
+    printf("Vb=%f, Vr=%f\n",Vb,Vr);
 }
 
 void computeViewerMatrix(int id) {
@@ -182,6 +233,10 @@ void computeViewerMatrix(int id) {
     float r = sqrt(Ax*Ax + Bx*Bx);
     float R = sqrt(Ax*Ax + Bx*Bx + Cx*Cx);
     float h = r*sqrt(Az*Az + Bz*Bz + Cz*Cz);
+
+    printf("Az=%f, Bz=%f, Cz=%f\n",Az,Bz,Cz);
+    printf("r=%f, R=%f, h=%f\n",r,R,h);
+    
     TranslateToViewer(3,0) = -EyePosX;
     TranslateToViewer(3,1) = -EyePosY;
     TranslateToViewer(3,2) = -EyePosZ;
@@ -230,24 +285,81 @@ void display(){
     glVertex2f(0, Wb);
     glEnd();
     
+    glColor3f(1.0f, 1.0f, 1.0f);
 
-    float inc = 360.0 / sides;
-    for (i=0; i<sides; i++) {
-	float baseAngle = Theta + i*inc;
-	/* color function uses trig to smooth values, scaled arbitrarily to look nice. */
-	float color = fabs(cos(PI*(float)i/sides))/1.3f + 0.08f;
-	glColor3f(color, color, color);
+    /* draw the cube */
+    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + 0, CubeZ + 0);
+    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + 0, CubeY + CubeSize, CubeZ + 0);
+    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + 0, CubeY + 0, CubeZ + 0);
 
-	glBegin(GL_POLYGON);
+    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
 
-	glVertex2f(x, y);
-	glVertex2f(x+CubeSize*cos(radians(baseAngle)), y+CubeSize*sin(radians(baseAngle)));
-	glVertex2f(x+CubeSize*cos(radians(baseAngle+inc)), y+CubeSize*sin(radians(baseAngle + inc)));
+    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
 
-	glEnd();
-    }
+    // float inc = 360.0 / sides;
+    // for (i=0; i<sides; i++) {
+    // 	float baseAngle = Theta + i*inc;
+    // 	/* color function uses trig to smooth values, scaled arbitrarily to look nice. */
+    // 	float color = fabs(cos(PI*(float)i/sides))/1.3f + 0.08f;
+    // 	glColor3f(color, color, color);
+
+    // 	glBegin(GL_POLYGON);
+
+    // 	glVertex2f(x, y);
+    // 	glVertex2f(x+CubeSize*cos(radians(baseAngle)), y+CubeSize*sin(radians(baseAngle)));
+    // 	glVertex2f(x+CubeSize*cos(radians(baseAngle+inc)), y+CubeSize*sin(radians(baseAngle + inc)));
+
+    // 	glEnd();
+    // }
   
     glutSwapBuffers();
+}
+
+void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
+    // Encode points as vectors (matrix)
+    Matrix m1 = Matrix(1,4);
+    float m1_entries[] = { x1, y1, z1, 1 };
+    m1 << m1_entries;
+    Matrix m2 = Matrix(1,4);
+    float m2_entries[] = { x2, y2, z2, 1 };
+    m2 << m2_entries;
+    
+    // Multiply these vectors by view transformation pipeline, etc.
+    m1 = m1 * V;
+    m2 = m2 * V;
+
+    // What kinds of numbers are we getting?
+    // puts("I am drawing this line:");
+    // m1.print();
+    // m2.print();
+    // V.print();
+
+    // Draw the line
+    glBegin(GL_LINES);
+    // glVertex3f(x1, y1, z1);
+    // glVertex3f(x2, y2, z2);
+    glVertex3f( m1(0,0), m1(0,1), m2(0,2) );
+    glVertex3f( m2(0,0), m2(0,1), m2(0,2) );
+    glEnd();
 }
 
 /* callbacks... nothing needed here. */
@@ -286,22 +398,29 @@ int main(int argc, char **argv) {
     GLUI_Spinner *epX = new GLUI_Spinner(eyePosRollout, "X", GLUI_SPINNER_FLOAT, &EyePosX, 0, computeViewerAngle);
     GLUI_Spinner *epY = new GLUI_Spinner(eyePosRollout, "Y", GLUI_SPINNER_FLOAT, &EyePosY, 0, computeViewerAngle);
     GLUI_Spinner *epZ = new GLUI_Spinner(eyePosRollout, "Z", GLUI_SPINNER_FLOAT, &EyePosZ, 0, computeViewerAngle);
-    epX->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
-    epY->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
-    epZ->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
+    epX->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    epY->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    epZ->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    epX->set_float_val(EyePosX);
+    epY->set_float_val(EyePosY);
+    epZ->set_float_val(EyePosZ);
     
     GLUI_Rollout *lookAtRollout = new GLUI_Rollout(control_panel, "Looking At", false);
     GLUI_Spinner *laX = new GLUI_Spinner(lookAtRollout, "X", GLUI_SPINNER_FLOAT, &LookAtX, 0, computeViewerAngle);
     GLUI_Spinner *laY = new GLUI_Spinner(lookAtRollout, "Y", GLUI_SPINNER_FLOAT, &LookAtY, 0, computeViewerAngle);
     GLUI_Spinner *laZ = new GLUI_Spinner(lookAtRollout, "Z", GLUI_SPINNER_FLOAT, &LookAtZ, 0, computeViewerAngle);
-    laX->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
-    laY->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
-    laZ->set_float_limits(-10.0f, 10.0f, GLUI_LIMIT_WRAP);
+    laX->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    laY->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    laZ->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    laX->set_float_val(LookAtX);
+    laY->set_float_val(LookAtY);
+    laZ->set_float_val(LookAtZ);
 
     new GLUI_Column(control_panel, true);
     GLUI_Rollout *clippingRollout = new GLUI_Rollout(control_panel, "Clipping Parameters", false);
-    GLUI_Spinner *thetaSpinner = new GLUI_Spinner(clippingRollout, "Theta", GLUI_SPINNER_FLOAT, &Theta);
+    GLUI_Spinner *thetaSpinner = new GLUI_Spinner(clippingRollout, "Theta", GLUI_SPINNER_FLOAT, &Theta, 0, computeWindowMatrix);
     thetaSpinner->set_float_limits(0.0f, 360.0f, GLUI_LIMIT_WRAP);
+    thetaSpinner->set_float_val(Theta);
  
     control_panel->set_main_gfx_window(main_window);
 
