@@ -64,6 +64,9 @@ void setupViewport(int w, int h) {
     Wt = VIEWPORT_MARGIN;
     Wr = XSCALE*w/INITIAL_WIDTH;
     Wb = h*YSCALE/INITIAL_HEIGHT;
+
+    printf("Wl=%f, Wr=%f, Wb=%f, Wt=%f\n", Wl, Wr, Wb, Wt);
+    
     gluOrtho2D(0, Wr, 0, Wb);
 
     /* Recompute W matrix */
@@ -153,9 +156,6 @@ void init() {
     computePerspectiveMatrix(0);
     computeWindowMatrix(0);
 
-
-
-
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
 
     // puts("This is what the matrix V is computed from:");
@@ -171,6 +171,15 @@ void init() {
     // FlipHandedness.print();
     // puts("And V ----------");
     // V.print();
+
+    puts("-------------------- VIEW PIPELINE --------------------");
+    puts("Here is V:");
+    V.print();
+    puts("Here is P:");
+    P.print();
+    puts("And this is W:");
+    W.print();
+
 }
 
 /**
@@ -202,13 +211,6 @@ void computeViewerAngle(int id) {
     Cx = xvector[2];
 
     computeViewerMatrix(0);
-
-    puts("Printing V again:");
-    V.print();
-    puts("Here is P:");
-    P.print();
-    puts("And this is W:");
-    W.print();
 }
 
 void computeViewerMatrix(int id) {
@@ -251,7 +253,7 @@ void computeWindowMatrix(int id) {
     Vr = Vt = -Vb;
     W(0,0) = (Wr - Wl)/(Vr - Vl);
     W(1,1) = (Wt - Wb)/(Vt - Vb);
-    W(0,3) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
+    W(3,0) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
     W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
 
     puts("Inside of computeWindowMatrix!");
@@ -265,6 +267,9 @@ void computePerspectiveMatrix(int id) {
 			 0, 0, YON_PLANE_DIST/(YON_PLANE_DIST-HITHER_PLANE_DIST), 1,
 			 0, 0, -HITHER_PLANE_DIST*YON_PLANE_DIST/(YON_PLANE_DIST-HITHER_PLANE_DIST), 0 };
     P << pentries;
+
+    puts("New perspective matrix:");
+    P.print();
 }
 
 void display(){
@@ -282,6 +287,14 @@ void display(){
     glVertex2f(Wr, 0);
     glVertex2f(Wr, Wb);
     glVertex2f(0, Wb);
+    glEnd();
+
+    glColor3f(1.0f, 0.1f, 0.0f);
+    glBegin(GL_POLYGON);
+    glVertex2f(0,0);
+    glVertex2f(8,0);
+    glVertex2f(8,8);
+    glVertex2f(0,8);
     glEnd();
     
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -313,22 +326,6 @@ void display(){
 	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
     drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
 	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
-
-    // float inc = 360.0 / sides;
-    // for (i=0; i<sides; i++) {
-    // 	float baseAngle = Theta + i*inc;
-    // 	/* color function uses trig to smooth values, scaled arbitrarily to look nice. */
-    // 	float color = fabs(cos(PI*(float)i/sides))/1.3f + 0.08f;
-    // 	glColor3f(color, color, color);
-
-    // 	glBegin(GL_POLYGON);
-
-    // 	glVertex2f(x, y);
-    // 	glVertex2f(x+CubeSize*cos(radians(baseAngle)), y+CubeSize*sin(radians(baseAngle)));
-    // 	glVertex2f(x+CubeSize*cos(radians(baseAngle+inc)), y+CubeSize*sin(radians(baseAngle + inc)));
-
-    // 	glEnd();
-    // }
   
     glutSwapBuffers();
 }
