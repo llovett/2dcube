@@ -150,7 +150,6 @@ void init() {
 
     // Calculate the view pipeline for first time
     computeViewerAngle(0);
-    computeViewerMatrix(0);
     computePerspectiveMatrix(0);
     computeWindowMatrix(0);
 
@@ -212,22 +211,6 @@ void computeViewerAngle(int id) {
     W.print();
 }
 
-/**
- * Recomputes the Matrix W based on current parameters.
- * */
-void computeWindowMatrix(int id) {
-    // Find viewplane variables
-    Vb = Vl = -VIEW_PLANE_DIST * tan(radians(Theta));
-    Vr = Vt = -Vb;
-    W(0,0) = (Wr - Wl)/(Vr - Vl);
-    W(1,1) = (Wt - Wb)/(Vt - Vb);
-    W(0,3) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
-    W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
-
-    puts("Inside of computeWindowMatrix!");
-    printf("Vb=%f, Vr=%f\n",Vb,Vr);
-}
-
 void computeViewerMatrix(int id) {
     /* transform matrix V */
     float r = sqrt(Ax*Ax + Bx*Bx);
@@ -242,8 +225,8 @@ void computeViewerMatrix(int id) {
     TranslateToViewer(3,2) = -EyePosZ;
 
     Rotate1(0,0) = Ax/r;
-    Rotate1(0,1) = Bx/r;
-    Rotate1(1,0) = -Bx/r;
+    Rotate1(0,1) = -Bx/r;
+    Rotate1(1,0) = Bx/r;
     Rotate1(1,1) = Ax/r;
     
     Rotate2(0,0) = r/R;
@@ -257,6 +240,22 @@ void computeViewerMatrix(int id) {
     Rotate3(2,2) = Cz*R/h;
 
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
+}
+
+/**
+ * Recomputes the Matrix W based on current parameters.
+ * */
+void computeWindowMatrix(int id) {
+    // Find viewplane variables
+    Vb = Vl = -VIEW_PLANE_DIST * tan(radians(Theta));
+    Vr = Vt = -Vb;
+    W(0,0) = (Wr - Wl)/(Vr - Vl);
+    W(1,1) = (Wt - Wb)/(Vt - Vb);
+    W(0,3) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
+    W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
+
+    puts("Inside of computeWindowMatrix!");
+    printf("Vb=%f, Vr=%f\n",Vb,Vr);
 }
 
 void computePerspectiveMatrix(int id) {
