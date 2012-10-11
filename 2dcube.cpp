@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #include <GL/glut.h>
 #include <GL/glui.h>
@@ -140,8 +140,15 @@ void init() {
 		   0, 0, 1, 0,
 		   0, 0, 0, 1 };
     W << ws;
+ 
+    // Calculate the view pipeline for first time
+    computeViewerAngle(0);
+    computePerspectiveMatrix(0);
+    computeWindowMatrix(0);
 
-    if ( DEBUG ) {
+    V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
+
+   if ( DEBUG ) {
 	puts("This is what the matrix V is computed from:");
 	puts("Translation to the viewer:");
 	TranslateToViewer.print();
@@ -154,13 +161,6 @@ void init() {
 	puts("Flipping handedness:");
 	FlipHandedness.print();
     }
-
-    // Calculate the view pipeline for first time
-    computeViewerAngle(0);
-    computePerspectiveMatrix(0);
-    computeWindowMatrix(0);
-
-    V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
 
     if ( DEBUG ) {
 	puts("-------------------- VIEW PIPELINE --------------------");
@@ -291,32 +291,32 @@ void display(){
 
     /* draw the cube */
     glColor3f(1.0f, 1.0f, 1.0f);
-    // drawLine(CubeX, CubeY, CubeZ,
-    // 	     CubeX + CubeSize, CubeY, CubeZ);
+    drawLine(CubeX, CubeY, CubeZ,
+    	     CubeX + CubeSize, CubeY, CubeZ);
     drawLine(CubeX + CubeSize, CubeY, CubeZ,
     	     CubeX + CubeSize, CubeY + CubeSize, CubeZ);
-    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ,
-    // 	     CubeX, CubeY + CubeSize, CubeZ);
-    // drawLine(CubeX, CubeY + CubeSize, CubeZ,
-    // 	     CubeX, CubeY, CubeZ);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ,
+    	     CubeX, CubeY + CubeSize, CubeZ);
+    drawLine(CubeX, CubeY + CubeSize, CubeZ,
+    	     CubeX, CubeY, CubeZ);
 
-    // drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-    // 	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    // drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-    // 	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-    // 	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
-    // drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-    // 	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+    	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+    	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+    	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
 
-    // drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-    // 	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
-    // drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-    // 	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-    // 	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    // drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-    // 	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+    	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+    	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+    	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
   
     glutSwapBuffers();
 }
@@ -339,22 +339,27 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     
     Matrix pipeline = V * P * W;
     if ( DEBUG ) {
-	puts("m1 and m2, respectively, before the transform:");
-	m1.print();
-	m2.print();
-	puts("The pipeline:");
-	pipeline.print();
+    	puts("m1 and m2, respectively, before the transform:");
+    	m1.print();
+    	m2.print();
+    	puts("The pipeline:");
+    	pipeline.print();
+	puts("V:");
+	V.print();
+	puts("P:");
+	P.print();
+	puts("W:");
+	W.print();
     }
 
-
-    Matrix m3 = m1 * pipeline;
-    Matrix m4 = m2 * pipeline;
-
+    m1 = m1*pipeline;
+    m2 = m2*pipeline;
+    
     // What kinds of numbers are we getting?
     if ( DEBUG ) {
-	puts("I am drawing this line:");
-	m3.print();
-	m4.print();
+    	puts("I am drawing this line:");
+    	m1.print();
+    	m2.print();
     }
 
     // Draw the line
