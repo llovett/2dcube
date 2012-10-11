@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #include <GL/glut.h>
 #include <GL/glui.h>
@@ -47,29 +47,31 @@ GLfloat side = 3.0;
 #define HITHER_PLANE_DIST 5.0f
 #define YON_PLANE_DIST 15.0f
 #define VIEWPORT_MARGIN 20.0f
-#define CubeX 3.0
-#define CubeY 6.0
-#define CubeZ 1.0
+#define CubeX 0
+#define CubeY 0
+#define CubeZ 0
 
 /* setupViewport(width, height)
  * 
  * Set up the viewport.
  */
 void setupViewport(int w, int h) {
-    w -= 2*VIEWPORT_MARGIN;
-    h -= 2*VIEWPORT_MARGIN;
-    glViewport(VIEWPORT_MARGIN, VIEWPORT_MARGIN, w, h); 
+    // w -= 2*VIEWPORT_MARGIN;
+    // h -= 2*VIEWPORT_MARGIN;
+    glViewport(0, 0, w, h); 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Wl = VIEWPORT_MARGIN;
-    Wt = VIEWPORT_MARGIN;
-    Wr = XSCALE*w/INITIAL_WIDTH;
-    Wb = h*YSCALE/INITIAL_HEIGHT;
+    // Wr = XSCALE*w/INITIAL_WIDTH;
+    // Wb = h*YSCALE/INITIAL_HEIGHT;
+    Wr = w;
+    Wb = h;
+    Wt = 0;
+    Wl = 0;
 
     if ( DEBUG )
 	printf("Wl=%f, Wr=%f, Wb=%f, Wt=%f\n", Wl, Wr, Wb, Wt);
     
-    gluOrtho2D(0, Wr, 0, Wb);
+    gluOrtho2D(Wl, Wr, Wt, Wb);
 
     /* Recompute W matrix */
     computeWindowMatrix(0);
@@ -147,30 +149,6 @@ void init() {
     computeWindowMatrix(0);
 
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
-
-   if ( DEBUG ) {
-	puts("This is what the matrix V is computed from:");
-	puts("Translation to the viewer:");
-	TranslateToViewer.print();
-	puts("Rotation 1:");
-	Rotate1.print();
-	puts("Rotation 2:");
-	Rotate2.print();
-	puts("Rotation 3:");
-	Rotate3.print();
-	puts("Flipping handedness:");
-	FlipHandedness.print();
-    }
-
-    if ( DEBUG ) {
-	puts("-------------------- VIEW PIPELINE --------------------");
-	puts("Here is V:");
-	V.print();
-	puts("Here is P:");
-	P.print();
-	puts("And this is W:");
-	W.print();
-    }
 
 }
 
@@ -283,42 +261,54 @@ void display(){
 
     /* drawing the viewport */
     glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(Wr, 0);
+    /* this is not the real viewport. We will clip to this
+     * area later on. */
+    glVertex2f(Wl, Wt);
+    glVertex2f(Wr, Wt);
     glVertex2f(Wr, Wb);
-    glVertex2f(0, Wb);
+    glVertex2f(Wl, Wb);
+    glEnd();
+
+    glColor3f(1.0,0.0,0.0);
+    glBegin(GL_POLYGON);
+    glVertex2f(0,0);
+    glVertex2f(0,10);
+    glVertex2f(10,10);
+    glVertex2f(10,0);
     glEnd();
 
     /* draw the cube */
     glColor3f(1.0f, 1.0f, 1.0f);
-    drawLine(CubeX, CubeY, CubeZ,
-    	     CubeX + CubeSize, CubeY, CubeZ);
-    drawLine(CubeX + CubeSize, CubeY, CubeZ,
-    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ,
-    	     CubeX, CubeY + CubeSize, CubeZ);
-    drawLine(CubeX, CubeY + CubeSize, CubeZ,
-    	     CubeX, CubeY, CubeZ);
 
-    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-    	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-    	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-    	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    drawLine(0, 0, 0,
+    	     CubeSize, 0, 0);
+    drawLine(CubeSize, 0, 0,
+    	     CubeSize, CubeSize, 0);
+    drawLine(CubeSize, CubeSize, 0,
+    	     0, CubeSize, 0);
+    drawLine(0, CubeSize, 0,
+    	     0, 0, 0);
 
-    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-    	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-    	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-    	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
-  
+    drawLine(0, 0, CubeSize,
+    	     CubeSize, 0, CubeSize);
+    drawLine(CubeSize, 0, CubeSize,
+    	     CubeSize, CubeSize, CubeSize);
+    drawLine(CubeSize, CubeSize, CubeSize,
+    	     0, CubeSize, CubeSize);
+    drawLine(0, CubeSize, CubeSize,
+    	     0, 0, CubeSize);
+
+    drawLine(0, 0, 0,
+	     0, 0, CubeSize);
+    drawLine(CubeSize, 0, 0,
+	     CubeSize, 0, CubeSize);
+    drawLine(CubeSize, CubeSize, 0,
+	     CubeSize, CubeSize, CubeSize);
+    drawLine(0, CubeSize, 0,
+	     0, CubeSize, CubeSize);
+
     glutSwapBuffers();
+
 }
 
 void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
@@ -329,37 +319,31 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     Matrix m2 = Matrix(1,4);
     float m2_entries[] = { x2, y2, z2, 1 };
     m2 << m2_entries;
-
-    if ( DEBUG ) {
-	puts("Transforming these points to draw a line:");
-	m1.print();
-	m2.print();
-	puts("------------------------------");
-    }
     
     Matrix pipeline = V * P * W;
-    if ( DEBUG ) {
-    	puts("m1 and m2, respectively, before the transform:");
-    	m1.print();
-    	m2.print();
-    	puts("The pipeline:");
-    	pipeline.print();
-	puts("V:");
-	V.print();
-	puts("P:");
-	P.print();
-	puts("W:");
-	W.print();
-    }
+    m1 = Matrix::Homogenize(m1*pipeline);
+    m2 = Matrix::Homogenize(m2*pipeline);
 
-    m1 = m1*pipeline;
-    m2 = m2*pipeline;
-    
-    // What kinds of numbers are we getting?
     if ( DEBUG ) {
-    	puts("I am drawing this line:");
-    	m1.print();
-    	m2.print();
+	static int pcounter = 0;
+	pcounter = (pcounter+1)%50000;
+	if ( !pcounter ) {
+	    if ( DEBUG ) {
+		puts("-------------------- VIEW PIPELINE --------------------");
+		puts("Here is V:");
+		V.print();
+		puts("Here is P:");
+		P.print();
+		puts("And this is W:");
+		W.print();
+		puts("The pipeline, altogether:");
+		pipeline.print();
+
+		puts("I AM DRAWING THIS LINE:");
+		m1.print();
+		m2.print();
+	    }
+	}
     }
 
     // Draw the line
@@ -398,16 +382,16 @@ int main(int argc, char **argv) {
 
     new GLUI_Column(control_panel, true);
     GLUI_Spinner *spinner = new GLUI_Spinner(control_panel, "Size:", GLUI_SPINNER_FLOAT, &CubeSize);
-    spinner->set_float_limits(0.1f, 8.0f, GLUI_LIMIT_CLAMP);
+    spinner->set_float_limits(2.0f, 8.0f, GLUI_LIMIT_CLAMP);
 
     new GLUI_Column(control_panel, true);
     GLUI_Rollout *eyePosRollout = new GLUI_Rollout(control_panel, "Eye Position", false);
     GLUI_Spinner *epX = new GLUI_Spinner(eyePosRollout, "X", GLUI_SPINNER_FLOAT, &EyePosX, 0, computeViewerAngle);
     GLUI_Spinner *epY = new GLUI_Spinner(eyePosRollout, "Y", GLUI_SPINNER_FLOAT, &EyePosY, 0, computeViewerAngle);
     GLUI_Spinner *epZ = new GLUI_Spinner(eyePosRollout, "Z", GLUI_SPINNER_FLOAT, &EyePosZ, 0, computeViewerAngle);
-    epX->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
-    epY->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
-    epZ->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    epX->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
+    epY->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
+    epZ->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
     epX->set_float_val(EyePosX);
     epY->set_float_val(EyePosY);
     epZ->set_float_val(EyePosZ);
@@ -416,9 +400,9 @@ int main(int argc, char **argv) {
     GLUI_Spinner *laX = new GLUI_Spinner(lookAtRollout, "X", GLUI_SPINNER_FLOAT, &LookAtX, 0, computeViewerAngle);
     GLUI_Spinner *laY = new GLUI_Spinner(lookAtRollout, "Y", GLUI_SPINNER_FLOAT, &LookAtY, 0, computeViewerAngle);
     GLUI_Spinner *laZ = new GLUI_Spinner(lookAtRollout, "Z", GLUI_SPINNER_FLOAT, &LookAtZ, 0, computeViewerAngle);
-    laX->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
-    laY->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
-    laZ->set_float_limits(-500.0f, 500.0f, GLUI_LIMIT_WRAP);
+    laX->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
+    laY->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
+    laZ->set_float_limits(-100.0f, 100.0f, GLUI_LIMIT_WRAP);
     laX->set_float_val(LookAtX);
     laY->set_float_val(LookAtY);
     laZ->set_float_val(LookAtZ);
