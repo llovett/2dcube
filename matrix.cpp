@@ -80,6 +80,35 @@ using namespace std;
 //     return 0;
 // }
 
+// int main() {
+//     Matrix m = Matrix(4,4);
+//     float entries[] = { 1, 2, 3, 4,
+// 			5,6,7,8,
+// 			12,13,14,15,
+// 			45,1,2,2 };
+//     m << entries;
+//     Matrix h = Matrix::Homogenize(m);
+//     cout << "ORIGINAL MATRIX:"<<endl;
+//     m.print();
+//     cout << "HOMOGENIZED MATRIX:"<<endl;
+//     h.print();
+// }
+
+int main() {
+    Matrix m1 = Matrix(4,4);
+    float m1_entries[] = {-3.878749, -11.056583, -0.866025, -0.577350,
+			  -12.979877, -11.056583, -0.866025, -0.577350,
+			  -8.429314, -3.174775, -0.866025, -0.577350,
+			  252.879395, 252.879395, 18.480761, 17.320507 };
+    m1 << m1_entries;
+    Matrix m2 = Matrix(1,4);
+    float m2_entries[] = { 6.000000, 6.000000, 1.000000, 1.000000 };
+    m2 << m2_entries;
+    Matrix m3 = m2 * m1;
+    m3.print();
+    return 0;
+}
+
 Matrix::Matrix(int rows, int columns) {
     this->init(rows,columns,NULL);
 }
@@ -230,6 +259,18 @@ Matrix operator*(const Matrix& A, const Matrix& B) {
 		entry += A.getEntry(i,k) * B.getEntry(k,j);
 	    }
 	    result(i,j) = entry;
+	}
+    }
+    return result;
+}
+
+Matrix Matrix::Homogenize(const Matrix& matrix) {
+    Matrix result(matrix.getRows(), matrix.getColumns());
+
+    float d = matrix.getEntry(matrix.getRows()-1,matrix.getColumns()-1);
+    for ( int i=0; i<matrix.getRows(); i++ ) {
+	for ( int j=0; j<matrix.getColumns(); j++ ) {
+	    result(i,j) = matrix.getEntry(i,j)/d;
 	}
     }
     return result;

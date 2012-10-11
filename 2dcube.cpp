@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#define DEBUG 1
 
 #include <GL/glut.h>
 #include <GL/glui.h>
@@ -47,7 +48,7 @@ GLfloat side = 3.0;
 #define YON_PLANE_DIST 15.0f
 #define VIEWPORT_MARGIN 20.0f
 #define CubeX 3.0
-#define CubeY 3.0
+#define CubeY 6.0
 #define CubeZ 1.0
 
 /* setupViewport(width, height)
@@ -65,7 +66,8 @@ void setupViewport(int w, int h) {
     Wr = XSCALE*w/INITIAL_WIDTH;
     Wb = h*YSCALE/INITIAL_HEIGHT;
 
-    printf("Wl=%f, Wr=%f, Wb=%f, Wt=%f\n", Wl, Wr, Wb, Wt);
+    if ( DEBUG )
+	printf("Wl=%f, Wr=%f, Wb=%f, Wt=%f\n", Wl, Wr, Wb, Wt);
     
     gluOrtho2D(0, Wr, 0, Wb);
 
@@ -138,18 +140,20 @@ void init() {
 		   0, 0, 1, 0,
 		   0, 0, 0, 1 };
     W << ws;
-    puts("This is what the matrix V is computed from:");
-    puts("Translation to the viewer:");
-    TranslateToViewer.print();
-    puts("Rotation 1:");
-    Rotate1.print();
-    puts("Rotation 2:");
-    Rotate2.print();
-    puts("Rotation 3:");
-    Rotate3.print();
-    puts("Flipping handedness:");
-    FlipHandedness.print();
 
+    if ( DEBUG ) {
+	puts("This is what the matrix V is computed from:");
+	puts("Translation to the viewer:");
+	TranslateToViewer.print();
+	puts("Rotation 1:");
+	Rotate1.print();
+	puts("Rotation 2:");
+	Rotate2.print();
+	puts("Rotation 3:");
+	Rotate3.print();
+	puts("Flipping handedness:");
+	FlipHandedness.print();
+    }
 
     // Calculate the view pipeline for first time
     computeViewerAngle(0);
@@ -158,27 +162,15 @@ void init() {
 
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
 
-    // puts("This is what the matrix V is computed from:");
-    // puts("Translation to the viewer:");
-    // TranslateToViewer.print();
-    // puts("Rotation 1:");
-    // Rotate1.print();
-    // puts("Rotation 2:");
-    // Rotate2.print();
-    // puts("Rotation 3:");
-    // Rotate3.print();
-    // puts("Flipping handedness:");
-    // FlipHandedness.print();
-    // puts("And V ----------");
-    // V.print();
-
-    puts("-------------------- VIEW PIPELINE --------------------");
-    puts("Here is V:");
-    V.print();
-    puts("Here is P:");
-    P.print();
-    puts("And this is W:");
-    W.print();
+    if ( DEBUG ) {
+	puts("-------------------- VIEW PIPELINE --------------------");
+	puts("Here is V:");
+	V.print();
+	puts("Here is P:");
+	P.print();
+	puts("And this is W:");
+	W.print();
+    }
 
 }
 
@@ -201,11 +193,13 @@ void computeViewerAngle(int id) {
     float upvector[] = { Ay, By, Cy };
     float *xvector = crossProduct(zvector, upvector);
 
-    puts("Printing parallel x-vector to viewer:");
-    for ( int i=0; i<3; i++ ) {
-	printf("xvector[%d] = %f\n",i,xvector[i]);
+    if ( DEBUG ) {
+	puts("Printing parallel x-vector to viewer:");
+	for ( int i=0; i<3; i++ ) {
+	    printf("xvector[%d] = %f\n",i,xvector[i]);
+	}
     }
-    
+
     Ax = xvector[0];
     Bx = xvector[1];
     Cx = xvector[2];
@@ -219,9 +213,11 @@ void computeViewerMatrix(int id) {
     float R = sqrt(Ax*Ax + Bx*Bx + Cx*Cx);
     float h = r*sqrt(Az*Az + Bz*Bz + Cz*Cz);
 
-    printf("Az=%f, Bz=%f, Cz=%f\n",Az,Bz,Cz);
-    printf("r=%f, R=%f, h=%f\n",r,R,h);
-    
+    if ( DEBUG ) {
+	printf("Az=%f, Bz=%f, Cz=%f\n",Az,Bz,Cz);
+	printf("r=%f, R=%f, h=%f\n",r,R,h);
+    }
+
     TranslateToViewer(3,0) = -EyePosX;
     TranslateToViewer(3,1) = -EyePosY;
     TranslateToViewer(3,2) = -EyePosZ;
@@ -256,8 +252,10 @@ void computeWindowMatrix(int id) {
     W(3,0) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
     W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
 
-    puts("Inside of computeWindowMatrix!");
-    printf("Vb=%f, Vr=%f\n",Vb,Vr);
+    if ( DEBUG ) {
+	puts("Inside of computeWindowMatrix!");
+	printf("Vb=%f, Vr=%f\n",Vb,Vr);
+    }
 }
 
 void computePerspectiveMatrix(int id) {
@@ -268,8 +266,10 @@ void computePerspectiveMatrix(int id) {
 			 0, 0, -HITHER_PLANE_DIST*YON_PLANE_DIST/(YON_PLANE_DIST-HITHER_PLANE_DIST), 0 };
     P << pentries;
 
-    puts("New perspective matrix:");
-    P.print();
+    if ( DEBUG ) {
+	puts("New perspective matrix:");
+	P.print();
+    }
 }
 
 void display(){
@@ -289,43 +289,34 @@ void display(){
     glVertex2f(0, Wb);
     glEnd();
 
-    glColor3f(1.0f, 0.1f, 0.0f);
-    glBegin(GL_POLYGON);
-    glVertex2f(0,0);
-    glVertex2f(8,0);
-    glVertex2f(8,8);
-    glVertex2f(0,8);
-    glEnd();
-    
-    glColor3f(1.0f, 1.0f, 1.0f);
-
     /* draw the cube */
-    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + 0, CubeZ + 0);
-    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + 0, CubeY + CubeSize, CubeZ + 0);
-    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + 0, CubeY + 0, CubeZ + 0);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    // drawLine(CubeX, CubeY, CubeZ,
+    // 	     CubeX + CubeSize, CubeY, CubeZ);
+    drawLine(CubeX + CubeSize, CubeY, CubeZ,
+    	     CubeX + CubeSize, CubeY + CubeSize, CubeZ);
+    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ,
+    // 	     CubeX, CubeY + CubeSize, CubeZ);
+    // drawLine(CubeX, CubeY + CubeSize, CubeZ,
+    // 	     CubeX, CubeY, CubeZ);
 
-    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    // drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+    // 	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    // drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+    // 	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+    // 	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
+    // drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+    // 	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
 
-    drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
-	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
-    drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
-    drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
-	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
+    // drawLine(CubeX + 0, CubeY + 0, CubeZ + 0,
+    // 	     CubeX + 0, CubeY + 0, CubeZ + CubeSize);
+    // drawLine(CubeX + CubeSize, CubeY + 0, CubeZ + 0,
+    // 	     CubeX + CubeSize, CubeY + 0, CubeZ + CubeSize);
+    // drawLine(CubeX + CubeSize, CubeY + CubeSize, CubeZ + 0,
+    // 	     CubeX + CubeSize, CubeY + CubeSize, CubeZ + CubeSize);
+    // drawLine(CubeX + 0, CubeY + CubeSize, CubeZ + 0,
+    // 	     CubeX + 0, CubeY + CubeSize, CubeZ + CubeSize);
   
     glutSwapBuffers();
 }
@@ -338,22 +329,37 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     Matrix m2 = Matrix(1,4);
     float m2_entries[] = { x2, y2, z2, 1 };
     m2 << m2_entries;
+
+    if ( DEBUG ) {
+	puts("Transforming these points to draw a line:");
+	m1.print();
+	m2.print();
+	puts("------------------------------");
+    }
     
-    // Multiply these vectors by view transformation pipeline, etc.
-    m1 = m1 * V;
-    m2 = m2 * V;
+    Matrix pipeline = V * P * W;
+    if ( DEBUG ) {
+	puts("m1 and m2, respectively, before the transform:");
+	m1.print();
+	m2.print();
+	puts("The pipeline:");
+	pipeline.print();
+    }
+
+
+    Matrix m3 = m1 * pipeline;
+    Matrix m4 = m2 * pipeline;
 
     // What kinds of numbers are we getting?
-    // puts("I am drawing this line:");
-    // m1.print();
-    // m2.print();
-    // V.print();
+    if ( DEBUG ) {
+	puts("I am drawing this line:");
+	m3.print();
+	m4.print();
+    }
 
     // Draw the line
     glBegin(GL_LINES);
-    // glVertex3f(x1, y1, z1);
-    // glVertex3f(x2, y2, z2);
-    glVertex3f( m1(0,0), m1(0,1), m2(0,2) );
+    glVertex3f( m1(0,0), m1(0,1), m1(0,2) );
     glVertex3f( m2(0,0), m2(0,1), m2(0,2) );
     glEnd();
 }

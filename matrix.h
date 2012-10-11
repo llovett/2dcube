@@ -33,6 +33,7 @@ public:
     void setMatrix(float *matrix);
     void print() const;
 
+    static Matrix Homogenize(const Matrix&);
     static float Determinant(const Matrix&);
 
     float& operator() (const int row, const int col);
