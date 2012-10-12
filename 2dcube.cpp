@@ -91,7 +91,7 @@ GLfloat radians(float alpha) {
  * Set up background, clearcolor, call setupViewport(width, height).
  */
 void init() {
-    glClearColor(1.0, 1.0, 0.4, 1.0);
+    glClearColor(8.0, 0.4, 0.0, 1.0);
     glColor3f(0.5, 0.5, 0.5);
     setupViewport(INITIAL_WIDTH, INITIAL_HEIGHT);
 
@@ -132,7 +132,7 @@ void init() {
     FlipHandedness << fh;
     // Initial entries for P
     float pentries[] = { VIEW_PLANE_DIST, 0, 0, 0,
-			 0, VIEW_PLANE_DIST, 0, 0,
+			 0, VIEW_PLANE_DIST, 0, 0, 
 			 0, 0, 0, 1,
 			 0, 0, 0, 0 };
     P << pentries;
@@ -263,18 +263,10 @@ void display(){
     glBegin(GL_POLYGON);
     /* this is not the real viewport. We will clip to this
      * area later on. */
-    glVertex2f(Wl, Wt);
-    glVertex2f(Wr, Wt);
-    glVertex2f(Wr, Wb);
-    glVertex2f(Wl, Wb);
-    glEnd();
-
-    glColor3f(1.0,0.0,0.0);
-    glBegin(GL_POLYGON);
-    glVertex2f(0,0);
-    glVertex2f(0,10);
-    glVertex2f(10,10);
-    glVertex2f(10,0);
+    glVertex2f(VIEWPORT_MARGIN, VIEWPORT_MARGIN);
+    glVertex2f(VIEWPORT_MARGIN, Wb - VIEWPORT_MARGIN);
+    glVertex2f(Wr - VIEWPORT_MARGIN, Wb - VIEWPORT_MARGIN);
+    glVertex2f(Wr - VIEWPORT_MARGIN, VIEWPORT_MARGIN);
     glEnd();
 
     /* draw the cube */
@@ -324,6 +316,13 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     m1 = Matrix::Homogenize(m1*pipeline);
     m2 = Matrix::Homogenize(m2*pipeline);
 
+    // Clip the line
+    float p1[3] = { m1(0,0), m1(0,1), m1(0,2) };
+    float p2[3] = { m2(0,0), m2(0,1), m2(0,2) };
+    if ( clip(p1, p2) ) {
+    	return;
+    }
+
     if ( DEBUG ) {
 	static int pcounter = 0;
 	pcounter = (pcounter+1)%50000;
@@ -340,6 +339,8 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
 		pipeline.print();
 
 		puts("I AM DRAWING THIS LINE:");
+		printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+		printf("(%f, %f, %f) -\n",p2[3],p2[4],p2[5]);
 		m1.print();
 		m2.print();
 	    }
@@ -348,9 +349,50 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
 
     // Draw the line
     glBegin(GL_LINES);
-    glVertex3f( m1(0,0), m1(0,1), m1(0,2) );
-    glVertex3f( m2(0,0), m2(0,1), m2(0,2) );
+    glVertex3f( p1[0], p1[1], p1[2] );
+    glVertex3f( p2[0], p2[1], p2[2] );
     glEnd();
+}
+
+/*
+ * clip
+ *
+ * Takes six floats by reference. clip will change these values to be ones that
+ * are clipped within the viewport, hither, and yon planes. Returns 1 if the line
+ * is clipped entirely.
+ * */
+int clip(float p1[3], float p2[3]) {
+    float x1, y1, z1;
+    float x2, y2, z2;
+    x1 = p1[0];
+    y1 = p1[1];
+    z1 = p1[2];
+    x2 = p2[0];
+    y2 = p2[1];
+    z2 = p2[2];
+
+    // Check for entire clipping of the line
+    if ( x1 < VIEWPORT_MARGIN && x2 < VIEWPORT_MARGIN ) {
+	return 1;
+    }
+    if ( y1 < VIEWPORT_MARGIN && y2 < VIEWPORT_MARGIN ) {
+	return 1;
+    }
+    if ( x1 > Wr - VIEWPORT_MARGIN && x2 > Wr - VIEWPORT_MARGIN ) {
+	return 1;
+    }
+    if ( y1 > Wb - VIEWPORT_MARGIN && y2 > Wb - VIEWPORT_MARGIN ) {
+	return 1;
+    }
+    
+    p1[0] = x1;
+    p1[1] = y1;
+    p1[2] = z1;
+    p2[0] = x2;
+    p2[1] = y2;
+    p2[2] = z2;
+    
+    return 0;
 }
 
 /* callbacks... nothing needed here. */
