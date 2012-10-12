@@ -289,6 +289,18 @@ Matrix operator+(const Matrix& A, const Matrix& B) {
     return result;
 }
 
+Matrix operator-(const Matrix& A, const Matrix& B) {
+    assert( A.getRows() == B.getRows() || A.getColumns() == B.getColumns() );
+    int i,j;
+    Matrix result(A.getRows(), A.getColumns());
+    for ( i=0; i<A.getRows(); i++ ) {
+	for ( j=0; j<A.getColumns(); j++ ) {
+	    result(i,j) = A.getEntry(i,j) - B.getEntry(i,j);
+	}
+    }
+    return result;
+}
+
 Matrix operator*(const Matrix& A, const Matrix& B) {
     assert( A.getColumns() == B.getRows() );
     Matrix result(A.getRows(), B.getColumns());
@@ -303,6 +315,17 @@ Matrix operator*(const Matrix& A, const Matrix& B) {
 		entry += A.getEntry(i,k)*B.getEntry(k,j);
 	    }
 	    result(i,j) = entry;
+	}
+    }
+    return result;
+}
+
+Matrix operator*(const Matrix& M, const float f) {
+    Matrix result(M.getRows(), M.getColumns());
+    int i,j;
+    for ( i=0; i<M.getRows(); i++ ) {
+	for ( j=0; j<M.getColumns(); j++ ) {
+	    result(i,j) = M.getEntry(i,j) * f;
 	}
     }
     return result;

@@ -395,6 +395,107 @@ int clip(float p1[3], float p2[3]) {
     return 0;
 }
 
+void clipBounds(float p1[3], float p2[3]) {
+    clipBounds(p1, p2, TOP);
+    clipBounds(p1, p2, BOTTOM);
+    clipBounds(p1, p2, LEFT);
+    clipBounds(p1, p2, RIGHT);
+}
+    
+/*
+ * clipBounds(point1, point2, direction)
+ *
+ * Clips either point1 or point2 so that the line is within the viewplane.
+ * This function assumes that at least part of the line must be visible.
+ * */
+void clipBounds(float p1[3], float p2[3], direction d) {
+    Matrix normal(1,3);
+    Matrix m0(1,3,p1);
+    Matrix v(1,3);
+    float v_entries[] = { (p2[0] - p1[0])/(p2[1] - p1[1]),
+			  1.0,
+			  (p2[2] - p1[2])/(p2[1] - p1[1]) };
+    v << v_entries;
+    float normal_entries[3] = { 0, 0, 0 };
+    float D;
+    switch ( d ) {
+    case TOP:
+    {
+	normal_entries[1] = -1;
+	D = Wb - VIEWPORT_MARGIN;
+    }
+	break;
+    case BOTTOM:
+    {
+	normal_entries[1] = 1;
+	D = VIEWPORT_MARGIN;
+    }
+	break;
+    case LEFT:
+    {
+	normal_entries[0] = 1;
+	D = VIEWPORT_MARGIN;
+    }
+	break;
+    case RIGHT:
+    {
+	normal_entries[0] = -1;
+	D = Wr - VIEWPORT_MARGIN;
+    }
+	break;
+    }
+    normal << normal_entries;
+    
+    // Check if there is nothing to be clipped. If so, return.
+    float normalDotV = (normal*v)(0,0);
+    if ( normalDotV == 0.0f ) return;
+
+    // Get the clipped point
+    float t = (D - (normal*P)(0,0))/normalDotV;
+    Matrix clippedPointVector = v*t;
+    float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
+
+    // We assume that at least part of the line is visible here.
+    switch ( d ) {
+    case TOP:
+    {
+	if ( p1[1] > Wb - VIEWPORT_MARGIN ) {
+	    p1 = clippedPoint;
+	} else if ( p2[1] > Wb - VIEWPORT_MARGIN ) {
+	    p2 = clippedPoint;
+	}
+    }
+	break;
+    case BOTTOM:
+    {
+	if ( p1[1] < VIEWPORT_MARGIN ) {
+	    p1 = clippedPoint;
+	} else if ( p2[1] < VIEWPORT_MARGIN ) {
+	    p2 = clippedPoint;
+	}
+    }
+	break;
+    case LEFT:
+    {
+	if ( p1[0] < VIEWPORT_MARGIN ) {
+	    p1 = clippedPoint;
+	} else if ( p2[0] < VIEWPORT_MARGIN ) {
+	    p2 = clippedPoint;
+	}
+    }
+	break;
+    case RIGHT:
+    {
+	if ( p1[0] > Wr - VIEWPORT_MARGIN ) {
+	    p1 = clippedPoint;
+	} else if ( p2[0] > Wr - VIEWPORT_MARGIN) {
+	    p2 = clippedPoint;
+	}
+    }
+	break;
+    }
+}
+
 /* callbacks... nothing needed here. */
 void speedsCallback(int ID) { }
 void sidesCallback(int ID) { }
