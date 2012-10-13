@@ -371,6 +371,9 @@ int clip(float p1[3], float p2[3]) {
     y2 = p2[1];
     z2 = p2[2];
 
+    unsigned short mask1, mask2;
+    mask1 = mask2 = 0;
+
     // Check for entire clipping of the line
     if ( x1 < VIEWPORT_MARGIN && x2 < VIEWPORT_MARGIN ) {
 	return 1;
@@ -456,6 +459,46 @@ void clipBounds(float p1[3], float p2[3], direction d) {
     float t = (D - (normal*m0)(0,0))/normalDotV;
     Matrix clippedPointVector = v*t + m0;
     float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
+ 
+    // We assume that at least part of the line is visible here.
+    switch ( d ) {
+    case TOP:
+    {
+	if ( p1[1] > Wb - VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[1] > Wb - VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
+    }
+	break;
+    case BOTTOM:
+    {
+	if ( p1[1] < VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[1] < VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
+    }
+	break;
+    case LEFT:
+    {
+	if ( p1[0] < VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[0] < VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
+    }
+	break;
+    case RIGHT:
+    {
+	if ( p1[0] > Wr - VIEWPORT_MARGIN ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[0] > Wr - VIEWPORT_MARGIN) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
+    }
+	break;
+    }
 
     if ( DEBUG ) {
 	static int pcounter = 0;
@@ -463,47 +506,10 @@ void clipBounds(float p1[3], float p2[3], direction d) {
 	if ( !pcounter ) {
 	    printf("Clipped point value: (%f,%f,%f)\n",
 		   clippedPoint[0],clippedPoint[1],clippedPoint[2]);
+	    puts("New line is, therefore ::::::::::::::::::::");
+	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
+	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
 	}
-    }
-
-    // We assume that at least part of the line is visible here.
-    switch ( d ) {
-    case TOP:
-    {
-	if ( p1[1] > Wb - VIEWPORT_MARGIN ) {
-	    std::copy(p1, p1+3, clippedPoint);;
-	} else if ( p2[1] > Wb - VIEWPORT_MARGIN ) {
-	    std::copy(p2, p2+3, clippedPoint);;
-	}
-    }
-	break;
-    case BOTTOM:
-    {
-	if ( p1[1] < VIEWPORT_MARGIN ) {
-	    std::copy(p1, p1+3, clippedPoint);;
-	} else if ( p2[1] < VIEWPORT_MARGIN ) {
-	    std::copy(p2, p2+3, clippedPoint);;
-	}
-    }
-	break;
-    case LEFT:
-    {
-	if ( p1[0] < VIEWPORT_MARGIN ) {
-	    std::copy(p1, p1+3, clippedPoint);;
-	} else if ( p2[0] < VIEWPORT_MARGIN ) {
-	    std::copy(p2, p2+3, clippedPoint);;
-	}
-    }
-	break;
-    case RIGHT:
-    {
-	if ( p1[0] > Wr - VIEWPORT_MARGIN ) {
-	    std::copy(p1, p1+3, clippedPoint);;
-	} else if ( p2[0] > Wr - VIEWPORT_MARGIN) {
-	    std::copy(p2, p2+3, clippedPoint);;
-	}
-    }
-	break;
     }
 }
 
