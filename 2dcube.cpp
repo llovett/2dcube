@@ -216,6 +216,8 @@ void computeViewerMatrix(int id) {
     Rotate3(2,2) = Cz*R/h;
 
     V = TranslateToViewer * Rotate1 * Rotate2 * Rotate3 * FlipHandedness;
+
+    display();
 }
 
 /**
@@ -234,6 +236,8 @@ void computeWindowMatrix(int id) {
 	puts("Inside of computeWindowMatrix!");
 	printf("Vb=%f, Vr=%f\n",Vb,Vr);
     }
+
+    display();
 }
 
 void computePerspectiveMatrix(int id) {
@@ -248,6 +252,8 @@ void computePerspectiveMatrix(int id) {
 	puts("New perspective matrix:");
 	P.print();
     }
+
+    display();
 }
 
 void display(){
@@ -323,29 +329,29 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     	return;
     }
 
-    if ( DEBUG ) {
-	static int pcounter = 0;
-	pcounter = (pcounter+1)%50000;
-	if ( !pcounter ) {
-	    if ( DEBUG ) {
-		puts("-------------------- VIEW PIPELINE --------------------");
-		puts("Here is V:");
-		V.print();
-		puts("Here is P:");
-		P.print();
-		puts("And this is W:");
-		W.print();
-		puts("The pipeline, altogether:");
-		pipeline.print();
+    // if ( DEBUG ) {
+    // 	static int pcounter = 0;
+    // 	pcounter = (pcounter+1)%50000;
+    // 	if ( !pcounter ) {
+    // 	    if ( DEBUG ) {
+    // 		puts("-------------------- VIEW PIPELINE --------------------");
+    // 		puts("Here is V:");
+    // 		V.print();
+    // 		puts("Here is P:");
+    // 		P.print();
+    // 		puts("And this is W:");
+    // 		W.print();
+    // 		puts("The pipeline, altogether:");
+    // 		pipeline.print();
 
-		puts("I AM DRAWING THIS LINE:");
-		printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-		printf("(%f, %f, %f) -\n",p2[3],p2[4],p2[5]);
-		m1.print();
-		m2.print();
-	    }
-	}
-    }
+    // 		puts("I AM DRAWING THIS LINE:");
+    // 		printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+    // 		printf("(%f, %f, %f) -\n",p2[3],p2[4],p2[5]);
+    // 		m1.print();
+    // 		m2.print();
+    // 	    }
+    // 	}
+    // }
 
     // Draw the line
     glBegin(GL_LINES);
@@ -414,6 +420,33 @@ void clipBounds(float p1[3], float p2[3]) {
  * This function assumes that at least part of the line must be visible.
  * */
 void clipBounds(float p1[3], float p2[3], direction d) {
+
+    if ( DEBUG ) {
+	static int pcounter = 0;
+	pcounter = (pcounter+1)%50001;
+	if ( d == BOTTOM ) {
+	    puts("Original line vertices ::::::::::::::::::::");
+	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
+	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
+	    printf("Direction is ");
+	    switch ( d ) {
+	    case TOP:
+		puts("TOP");
+		break;
+	    case BOTTOM:
+		puts("BOTTOM");
+		break;
+	    case LEFT:
+		puts("LEFT");
+		break;
+	    case RIGHT:
+		puts("RIGHT");
+		break;
+	    }
+	}
+    }
+
+
     Matrix normal(3,1);
     Matrix m0(1,3,p1);
     Matrix v(1,3);
@@ -452,7 +485,15 @@ void clipBounds(float p1[3], float p2[3], direction d) {
     normal << normal_entries;
     
     // Check if there is nothing to be clipped. If so, return.
-    float normalDotV = (normal*v)(0,0);
+    float normalDotV = (v*normal)(0,0);
+    if ( d == BOTTOM ) {
+	puts("normal:");
+	normal.print();
+	puts("v:");
+	v.print();
+	printf("Normal dotted with V is %f\n",normalDotV);
+
+    }
     if ( normalDotV == 0.0f ) return;
 
     // Get the clipped point
@@ -473,6 +514,7 @@ void clipBounds(float p1[3], float p2[3], direction d) {
 	break;
     case BOTTOM:
     {
+	puts("I AM AN INTELLIGENT MACHINE!!!");
 	if ( p1[1] < VIEWPORT_MARGIN ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
 	} else if ( p2[1] < VIEWPORT_MARGIN ) {
@@ -502,24 +544,15 @@ void clipBounds(float p1[3], float p2[3], direction d) {
 
     if ( DEBUG ) {
 	static int pcounter = 0;
-	pcounter = (pcounter+1)%50000;
-	if ( !pcounter ) {
+	pcounter = (pcounter+1)%50001;
+//	if ( !pcounter ) {
 	    printf("Clipped point value: (%f,%f,%f)\n",
 		   clippedPoint[0],clippedPoint[1],clippedPoint[2]);
 	    puts("New line is, therefore ::::::::::::::::::::");
 	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
 	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
-	}
+//	}
     }
-}
-
-/* callbacks... nothing needed here. */
-void speedsCallback(int ID) { }
-void sidesCallback(int ID) { }
-
-void spinDisplay() {
-    Theta += SPEEDS[WhichSpeed];
-    display();
 }
 
 int main(int argc, char **argv) {
@@ -575,7 +608,6 @@ int main(int argc, char **argv) {
  
     control_panel->set_main_gfx_window(main_window);
 
-    GLUI_Master.set_glutIdleFunc(spinDisplay);
     glutMainLoop();
     return EXIT_SUCCESS;
 } 
