@@ -322,11 +322,20 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     m1 = Matrix::Homogenize(m1*pipeline);
     m2 = Matrix::Homogenize(m2*pipeline);
 
-    // Clip the line
+    // Draw the line, if it doesn't clip off the screen
     float p1[3] = { m1(0,0), m1(0,1), m1(0,2) };
     float p2[3] = { m2(0,0), m2(0,1), m2(0,2) };
-    if ( clip(p1, p2) ) {
-    	return;
+
+    if ( clip(p1, p2, TOP) &&
+	 clip(p1, p2, BOTTOM) &&
+	 clip(p1, p2, LEFT) &&
+	 clip(p1, p2, RIGHT) ) {
+
+	glBegin(GL_LINES);
+	glVertex3f( p1[0], p1[1], p1[2] );
+	glVertex3f( p2[0], p2[1], p2[2] );
+	glEnd();
+
     }
 
     // if ( DEBUG ) {
@@ -353,11 +362,6 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     // 	}
     // }
 
-    // Draw the line
-    glBegin(GL_LINES);
-    glVertex3f( p1[0], p1[1], p1[2] );
-    glVertex3f( p2[0], p2[1], p2[2] );
-    glEnd();
 }
 
 /*
@@ -367,116 +371,51 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
  * are clipped within the viewport, hither, and yon planes. Returns 1 if the line
  * is clipped entirely.
  * */
-int clip(float p1[3], float p2[3]) {
-    float x1, y1, z1;
-    float x2, y2, z2;
-    x1 = p1[0];
-    y1 = p1[1];
-    z1 = p1[2];
-    x2 = p2[0];
-    y2 = p2[1];
-    z2 = p2[2];
-
-    unsigned short mask1, mask2;
-    mask1 = mask2 = 0;
-
-    // Check for entire clipping of the line
-    if ( x1 < VIEWPORT_MARGIN && x2 < VIEWPORT_MARGIN ) {
-	return 1;
-    }
-    if ( y1 < VIEWPORT_MARGIN && y2 < VIEWPORT_MARGIN ) {
-	return 1;
-    }
-    if ( x1 > Wr - VIEWPORT_MARGIN && x2 > Wr - VIEWPORT_MARGIN ) {
-	return 1;
-    }
-    if ( y1 > Wb - VIEWPORT_MARGIN && y2 > Wb - VIEWPORT_MARGIN ) {
-	return 1;
-    }
-    
-    p1[0] = x1;
-    p1[1] = y1;
-    p1[2] = z1;
-    p2[0] = x2;
-    p2[1] = y2;
-    p2[2] = z2;
-
-    clipBounds(p1,p2);
-    
-    return 0;
-}
-
-void clipBounds(float p1[3], float p2[3]) {
-    clipBounds(p1, p2, TOP);
-    clipBounds(p1, p2, BOTTOM);
-    clipBounds(p1, p2, LEFT);
-    clipBounds(p1, p2, RIGHT);
-}
-    
-/*
- * clipBounds(point1, point2, direction)
- *
- * Clips either point1 or point2 so that the line is within the viewplane.
- * This function assumes that at least part of the line must be visible.
- * */
-void clipBounds(float p1[3], float p2[3], direction d) {
-
-    if ( DEBUG ) {
-	static int pcounter = 0;
-	pcounter = (pcounter+1)%50001;
-	if ( d == BOTTOM ) {
-	    puts("Original line vertices ::::::::::::::::::::");
-	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
-	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
-	    printf("Direction is ");
-	    switch ( d ) {
-	    case TOP:
-		puts("TOP");
-		break;
-	    case BOTTOM:
-		puts("BOTTOM");
-		break;
-	    case LEFT:
-		puts("LEFT");
-		break;
-	    case RIGHT:
-		puts("RIGHT");
-		break;
-	    }
-	}
-    }
-
-
+int clip(float p1[3], float p2[3], direction d) {
     Matrix normal(3,1);
     Matrix m0(1,3,p1);
     Matrix v(1,3);
-    float v_entries[] = { (p2[0] - p1[0])/(p2[1] - p1[1]),
-			  1.0,
-			  (p2[2] - p1[2])/(p2[1] - p1[1]) };
+    float v_entries[] = { p2[0] - p1[0],
+			  p2[1] - p1[1],
+			  p2[2] - p1[2] };
     v << v_entries;
     float normal_entries[3] = { 0, 0, 0 };
     float D;
+
+    // Set normal vector, D, and check if the entire line is clipped
     switch ( d ) {
     case TOP:
     {
+	if ( p1[1] > Wb - VIEWPORT_MARGIN && p2[1] > Wb - VIEWPORT_MARGIN ) {
+	    return 0;
+	}
 	normal_entries[1] = 1;
 	D = Wb - VIEWPORT_MARGIN;
     }
 	break;
     case BOTTOM:
     {
+	if ( p1[1] < VIEWPORT_MARGIN && p2[1] < VIEWPORT_MARGIN ) {
+	    return 0;
+	}
 	normal_entries[1] = 1;
 	D = VIEWPORT_MARGIN;
     }
 	break;
     case LEFT:
     {
+	if ( p1[0] < VIEWPORT_MARGIN && p2[0] < VIEWPORT_MARGIN ) {
+	    return 0;
+	}
 	normal_entries[0] = 1;
 	D = VIEWPORT_MARGIN;
     }
 	break;
     case RIGHT:
     {
+	if ( p1[0] > Wr - VIEWPORT_MARGIN && p2[0] > Wr - VIEWPORT_MARGIN ) {
+	    return 0;
+	}
 	normal_entries[0] = 1;
 	D = Wr - VIEWPORT_MARGIN;
     }
@@ -494,10 +433,14 @@ void clipBounds(float p1[3], float p2[3], direction d) {
 	printf("Normal dotted with V is %f\n",normalDotV);
 
     }
-    if ( normalDotV == 0.0f ) return;
+    if ( normalDotV == 0.0f ) return 1;
 
     // Get the clipped point
-    float t = (D - (normal*m0)(0,0))/normalDotV;
+    float t = (D - (m0*normal)(0,0))/normalDotV;
+    printf("D=%f, normal (dot) p1=%f, normal (dot) V=%f\n",
+	   D,
+	   (normal*m0)(0,0),
+	   normalDotV);
     Matrix clippedPointVector = v*t + m0;
     float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
  
@@ -553,6 +496,8 @@ void clipBounds(float p1[3], float p2[3], direction d) {
 	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
 //	}
     }
+    
+    return 1;
 }
 
 int main(int argc, char **argv) {
@@ -630,4 +575,18 @@ void testCP() {
 
     printf("Parallel z-vector: <%f,%f,%f>\n", Az, Bz, Cz);
     printf("Parallel x-vector: <%f,%f,%f>\n", Ax, Bx, Cx);
+}
+
+void testClip() {
+    float p1[] = { 30, 30, 10 };
+    float p2[] = { 60, 0, 5 };
+
+    if ( clip(p1, p2, BOTTOM) ) {
+	puts("Line does display:");
+	printf("(%f,%f,%f) - (%f,%f,%f)\n",
+	       p1[0], p1[1], p1[2],
+	       p2[0], p2[1], p2[2]);
+    } else {
+	puts("The line is entirely clipped.");
+    }
 }
