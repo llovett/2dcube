@@ -87,7 +87,8 @@ GLfloat radians(float alpha) {
  * Set up background, clearcolor, call setupViewport(width, height).
  */
 void init() {
-    glClearColor(8.0, 0.4, 0.0, 1.0);
+    // glClearColor(8.0, 0.4, 0.0, 1.0);
+    glClearColor(0, 0, 0, 1);
     glColor3f(0.5, 0.5, 0.5);
     setupViewport(INITIAL_WIDTH, INITIAL_HEIGHT);
 
@@ -265,8 +266,7 @@ void display(){
     glEnd();
 
     /* draw the cube */
-    glColor3f(1.0f, 1.0f, 1.0f);
-
+    glColor3f(1.0,0.0,0.0);
     drawLine(0, 0, 0,
     	     CubeSize, 0, 0);
     drawLine(CubeSize, 0, 0,
@@ -275,9 +275,11 @@ void display(){
     	     0, CubeSize, 0);
     drawLine(0, CubeSize, 0,
     	     0, 0, 0);
+    glColor3f(1.0,0.3,0.0);
     drawLine(CubeSize,0,CubeSize,
 	     CubeSize,CubeSize,0);
 
+    glColor3f(0.0,1.0,0.0);
     drawLine(0, 0, CubeSize,
     	     CubeSize, 0, CubeSize);
     drawLine(CubeSize, 0, CubeSize,
@@ -287,6 +289,7 @@ void display(){
     drawLine(0, CubeSize, CubeSize,
     	     0, 0, CubeSize);
 
+    glColor3f(0.0,1.0,1.0);
     drawLine(0, 0, 0,
 	     0, 0, CubeSize);
     drawLine(CubeSize, 0, 0,
@@ -326,34 +329,34 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     	 clip(p1, p2, BOTTOM) &&
     	 clip(p1, p2, LEFT) &&
     	 clip(p1, p2, RIGHT) &&
-	 clip(p1, p2, HITHER) &&
-	 clip(p1, p2, YON) ) {
+    	 clip(p1, p2, HITHER) &&
+    	 clip(p1, p2, YON) ) {
 
-	glBegin(GL_LINES);
-	glVertex3f( p1[0], p1[1], p1[2] );
-	glVertex3f( p2[0], p2[1], p2[2] );
-	glEnd();
+    	glBegin(GL_LINES);
+    	glVertex3f( p1[0], p1[1], p1[2] );
+    	glVertex3f( p2[0], p2[1], p2[2] );
+    	glEnd();
 
-	// if ( DEBUG ) {
-	//     // puts("-------------------- VIEW PIPELINE --------------------");
-	//     // puts("Here is V:");
-	//     // V.print();
-	//     // puts("Here is P:");
-	//     // P.print();
-	//     // puts("And this is W:");
-	//     // W.print();
-	//     // puts("The pipeline, altogether:");
-	//     // pipeline.print();
+    	// if ( DEBUG ) {
+    	//     // puts("-------------------- VIEW PIPELINE --------------------");
+    	//     // puts("Here is V:");
+    	//     // V.print();
+    	//     // puts("Here is P:");
+    	//     // P.print();
+    	//     // puts("And this is W:");
+    	//     // W.print();
+    	//     // puts("The pipeline, altogether:");
+    	//     // pipeline.print();
 
-	//     // printf("Vb=%f, Vt=%f\n",
-	//     // 	   Vb, Vt);
+    	//     // printf("Vb=%f, Vt=%f\n",
+    	//     // 	   Vb, Vt);
 
-	//     puts("I AM DRAWING THIS LINE:");
-	//     printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-	//     printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
-	//     m1.print();
-	//     m2.print();
-	// }
+    	//     puts("I AM DRAWING THIS LINE:");
+    	//     printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+    	//     printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
+    	//     m1.print();
+    	//     m2.print();
+    	// }
 
     }
 
