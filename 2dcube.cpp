@@ -166,14 +166,7 @@ void computeViewerAngle(int id) {
     float zvector[] = { Az, Bz, Cz };
     float upvector[] = { Ay, By, Cy };
     float *xvector = crossProduct(zvector, upvector);
-
-    if ( DEBUG ) {
-	puts("Printing parallel x-vector to viewer:");
-	for ( int i=0; i<3; i++ ) {
-	    printf("xvector[%d] = %f\n",i,xvector[i]);
-	}
-    }
-
+ 
     Ax = xvector[0];
     Bx = xvector[1];
     Cx = xvector[2];
@@ -317,6 +310,11 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     m2 << m2_entries;
     
     Matrix pipeline = V * P * W;
+
+    puts("MOVED POINTS ----------------------------------------");
+    (m1*pipeline).print();
+    (m2*pipeline).print();
+
     m1 = Matrix::Homogenize(m1*pipeline);
     m2 = Matrix::Homogenize(m2*pipeline);
 
@@ -325,38 +323,47 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     float p2[3] = { m2(0,0), m2(0,1), m2(0,2) };
 
     if ( clip(p1, p2, TOP) &&
-	 clip(p1, p2, BOTTOM) &&
-	 clip(p1, p2, LEFT) &&
-	 clip(p1, p2, RIGHT) ) {
+    	 clip(p1, p2, BOTTOM) &&
+    	 clip(p1, p2, LEFT) &&
+    	 clip(p1, p2, RIGHT) &&
+	 clip(p1, p2, HITHER) &&
+	 clip(p1, p2, YON) ) {
 
 	glBegin(GL_LINES);
 	glVertex3f( p1[0], p1[1], p1[2] );
 	glVertex3f( p2[0], p2[1], p2[2] );
 	glEnd();
 
-	if ( DEBUG ) {
-	    // puts("-------------------- VIEW PIPELINE --------------------");
-	    // puts("Here is V:");
-	    // V.print();
-	    // puts("Here is P:");
-	    // P.print();
-	    // puts("And this is W:");
-	    // W.print();
-	    // puts("The pipeline, altogether:");
-	    // pipeline.print();
+	// if ( DEBUG ) {
+	//     // puts("-------------------- VIEW PIPELINE --------------------");
+	//     // puts("Here is V:");
+	//     // V.print();
+	//     // puts("Here is P:");
+	//     // P.print();
+	//     // puts("And this is W:");
+	//     // W.print();
+	//     // puts("The pipeline, altogether:");
+	//     // pipeline.print();
 
-	    // printf("Vb=%f, Vt=%f\n",
-	    // 	   Vb, Vt);
+	//     // printf("Vb=%f, Vt=%f\n",
+	//     // 	   Vb, Vt);
 
-	    puts("I AM DRAWING THIS LINE:");
-	    printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-	    printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
-	    m1.print();
-	    m2.print();
-	}
+	//     puts("I AM DRAWING THIS LINE:");
+	//     printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+	//     printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
+	//     m1.print();
+	//     m2.print();
+	// }
 
     }
 
+}
+
+float len(float p1[3], float p2[3]) {
+    float x = p1[0] - p2[0];
+    float y = p1[1] - p2[1];
+    float z = p1[2] - p2[2];
+    return (float)sqrt(x*x + y*y + z*z);
 }
 
 /*
@@ -400,8 +407,13 @@ int clip(float p1[3], float p2[3], direction d) {
     case LEFT:
     {
 	if ( p1[0] < VIEWPORT_MARGIN && p2[0] < VIEWPORT_MARGIN ) {
+	    puts("Clipping on the left!");
+	    printf("p1x=%f, p2x=%f\n",
+		   p1[0], p2[0]);
 	    return 0;
 	}
+	printf("Letting this one slide (LEFT)::::\np1x=%f,p2x=%f\n",
+	       p1[0],p2[0]);
 	normal_entries[0] = 1;
 	D = VIEWPORT_MARGIN;
     }
@@ -411,8 +423,32 @@ int clip(float p1[3], float p2[3], direction d) {
 	if ( p1[0] > Wr - VIEWPORT_MARGIN && p2[0] > Wr - VIEWPORT_MARGIN ) {
 	    return 0;
 	}
+	printf("Letting this one slide (RIGHT)::::\np1x=%f,p2x=%f\n",
+	       p1[0],p2[0]);
 	normal_entries[0] = 1;
 	D = Wr - VIEWPORT_MARGIN;
+    }
+	break;
+    case HITHER:
+    {
+	if ( p1[2] < HitherPlaneDist && p2[2] < HitherPlaneDist ) {
+	    puts("Clipping on the front!");
+	    printf("p1z=%f, p2z=%f\n",
+		   p1[2], p2[2]);
+
+	    return 0;
+	}
+	normal_entries[2] = 1;
+	D = HitherPlaneDist;
+    }
+        break;
+    case YON:
+    {
+	if ( p1[2] > YonPlaneDist && p2[2] > YonPlaneDist) {
+	    return 0;
+	}
+	normal_entries[2] = 1;
+	D = YonPlaneDist;
     }
 	break;
     }
@@ -420,22 +456,10 @@ int clip(float p1[3], float p2[3], direction d) {
     
     // Check if there is nothing to be clipped. If so, return.
     float normalDotV = (v*normal)(0,0);
-    // if ( d == BOTTOM ) {
-    // 	puts("normal:");
-    // 	normal.print();
-    // 	puts("v:");
-    // 	v.print();
-    // 	printf("Normal dotted with V is %f\n",normalDotV);
-
-    // }
     if ( normalDotV == 0.0f ) return 1;
 
     // Get the clipped point
     float t = (D - (m0*normal)(0,0))/normalDotV;
-    // printf("D=%f, normal (dot) p1=%f, normal (dot) V=%f\n",
-    // 	   D,
-    // 	   (normal*m0)(0,0),
-    // 	   normalDotV);
     Matrix clippedPointVector = v*t + m0;
     float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
  
@@ -452,7 +476,6 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     case BOTTOM:
     {
-	puts("I AM AN INTELLIGENT MACHINE!!!");
 	if ( p1[1] < VIEWPORT_MARGIN ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
 	} else if ( p2[1] < VIEWPORT_MARGIN ) {
@@ -478,7 +501,59 @@ int clip(float p1[3], float p2[3], direction d) {
 	}
     }
 	break;
+    case HITHER:
+    {
+	if ( p1[2] < HitherPlaneDist ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[2] < HitherPlaneDist ) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
     }
+	break;
+    case YON:
+    {
+	if ( p1[2] > YonPlaneDist ) {
+	    std::copy(clippedPoint, clippedPoint+3, p1);
+	} else if ( p2[2] > YonPlaneDist ) {
+	    std::copy(clippedPoint, clippedPoint+3, p2);
+	}
+    }
+	break;
+    }
+
+    // if ( len(p1,p2) > 1000 ) {
+    // 	puts("||||||||||||||||||||||||||||||");
+    // 	printf("This is an awfully long line...\n(%f,%f,%f) - (%f,%f,%f)\n",
+    // 	       p1[0],p1[1],p1[2],
+    // 	       p2[0],p2[1],p2[2]);
+
+    // 	puts("Printing parallel x-vector to viewer:");
+    // 	printf("Ax=%f\nBx=%f\nCx=%f\n",
+    // 	       Ax,Bx,Cx);
+
+    // 	puts("Translation:");
+    // 	TranslateToViewer.print();
+    // 	puts("Rot1:");
+    // 	Rotate1.print();
+    // 	puts("Rot2:");
+    // 	Rotate2.print();
+    // 	puts("Rot3:");
+    // 	Rotate3.print();
+    // 	puts("FH:");
+    // 	FlipHandedness.print();
+    // 	puts("V:");
+    // 	V.print();
+    // 	puts("P:");
+    // 	P.print();
+    // 	puts("W:");
+    // 	W.print();
+
+    // 	Matrix pipeline = V*P*W;
+    // 	puts("The pipeline:");
+    // 	pipeline.print();
+
+    // 	puts("------------------------------");
+    // }
 
 //     if ( DEBUG ) {
 // 	static int pcounter = 0;
@@ -545,9 +620,9 @@ int main(int argc, char **argv) {
     GLUI_Spinner *hitherDistRollout = new GLUI_Spinner(clippingRollout, "Hither", GLUI_SPINNER_FLOAT, &HitherPlaneDist, 0, computePerspectiveMatrix);
     GLUI_Spinner *yonDistRollout = new GLUI_Spinner(clippingRollout, "Yon", GLUI_SPINNER_FLOAT, &YonPlaneDist, 0, computePerspectiveMatrix);
     GLUI_Spinner *viewDistRollout = new GLUI_Spinner(clippingRollout, "View", GLUI_SPINNER_FLOAT, &ViewPlaneDist, 0, refreshWindowAndPerspective);
-    hitherDistRollout->set_float_limits(1.0f, 5.0f, GLUI_LIMIT_CLAMP);
+    hitherDistRollout->set_float_limits(0.0f, 5.0f, GLUI_LIMIT_CLAMP);
     viewDistRollout->set_float_limits(5.0f, 10.0f, GLUI_LIMIT_CLAMP);
-    yonDistRollout->set_float_limits(10.0f, 20.0f, GLUI_LIMIT_CLAMP);
+    yonDistRollout->set_float_limits(10.0f, 100.0f, GLUI_LIMIT_CLAMP);
     
     GLUI_Spinner *thetaSpinner = new GLUI_Spinner(control_panel, "Theta", GLUI_SPINNER_FLOAT, &Theta, 0, computeWindowMatrix);
     thetaSpinner->set_float_limits(0.0f, 360.0f, GLUI_LIMIT_WRAP);

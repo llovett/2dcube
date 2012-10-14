@@ -2,7 +2,9 @@ typedef enum {
     TOP,
     BOTTOM,
     LEFT,
-    RIGHT
+    RIGHT,
+    HITHER,
+    YON
 } direction;
 
 void computeViewerAngle(int id);
