@@ -27,6 +27,9 @@ GLfloat EyePosX, EyePosY, EyePosZ;
 GLfloat LookAtX, LookAtY, LookAtZ;
 GLfloat Wl, Wr, Wt, Wb, Vl, Vr, Vt, Vb;
 GLfloat Ax, Bx, Cx, Ay, By, Cy, Az, Bz, Cz;
+GLfloat ViewPlaneDist = 10.0f;
+GLfloat HitherPlaneDist = 5.0f;
+GLfloat YonPlaneDist = 15.0f;
 
 /* matrix transforms */
 Matrix TranslateToViewer(4,4);
@@ -43,9 +46,6 @@ int SIDES[] = { 8, 16, 32, 64, 128 };
 float SPEEDS[] = { 0.0, 0.01, 0.1, 1.0, 6.0 };
 GLfloat x=5.0, y=5.0;
 GLfloat side = 3.0;
-#define VIEW_PLANE_DIST 10.0f
-#define HITHER_PLANE_DIST 5.0f
-#define YON_PLANE_DIST 15.0f
 #define VIEWPORT_MARGIN 20.0f
 #define CubeX 0
 #define CubeY 0
@@ -56,13 +56,9 @@ GLfloat side = 3.0;
  * Set up the viewport.
  */
 void setupViewport(int w, int h) {
-    // w -= 2*VIEWPORT_MARGIN;
-    // h -= 2*VIEWPORT_MARGIN;
     glViewport(0, 0, w, h); 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    // Wr = XSCALE*w/INITIAL_WIDTH;
-    // Wb = h*YSCALE/INITIAL_HEIGHT;
     Wr = w;
     Wb = h;
     Wt = 0;
@@ -131,8 +127,8 @@ void init() {
 		     0, 0, 0, 1 };
     FlipHandedness << fh;
     // Initial entries for P
-    float pentries[] = { VIEW_PLANE_DIST, 0, 0, 0,
-			 0, VIEW_PLANE_DIST, 0, 0, 
+    float pentries[] = { ViewPlaneDist, 0, 0, 0,
+			 0, ViewPlaneDist, 0, 0, 
 			 0, 0, 0, 1,
 			 0, 0, 0, 0 };
     P << pentries;
@@ -225,27 +221,22 @@ void computeViewerMatrix(int id) {
  * */
 void computeWindowMatrix(int id) {
     // Find viewplane variables
-    Vb = Vl = -VIEW_PLANE_DIST * tan(radians(Theta));
+    Vb = Vl = -ViewPlaneDist * tan(radians(Theta));
     Vr = Vt = -Vb;
     W(0,0) = (Wr - Wl)/(Vr - Vl);
     W(1,1) = (Wt - Wb)/(Vt - Vb);
     W(3,0) = (Wl*Vr - Vl*Wr)/(Vr - Vl);
     W(3,1) = (Wb*Vt - Vb*Wt)/(Vt - Vb);
 
-    if ( DEBUG ) {
-	puts("Inside of computeWindowMatrix!");
-	printf("Vb=%f, Vr=%f\n",Vb,Vr);
-    }
-
     display();
 }
 
 void computePerspectiveMatrix(int id) {
     /* transform matrix P */
-    float pentries[] = { VIEW_PLANE_DIST, 0, 0, 0,
-			 0, VIEW_PLANE_DIST, 0, 0,
-			 0, 0, YON_PLANE_DIST/(YON_PLANE_DIST-HITHER_PLANE_DIST), 1,
-			 0, 0, -HITHER_PLANE_DIST*YON_PLANE_DIST/(YON_PLANE_DIST-HITHER_PLANE_DIST), 0 };
+    float pentries[] = { ViewPlaneDist, 0, 0, 0,
+			 0, ViewPlaneDist, 0, 0,
+			 0, 0, YonPlaneDist/(YonPlaneDist-HitherPlaneDist), 1,
+			 0, 0, -HitherPlaneDist*YonPlaneDist/(YonPlaneDist-HitherPlaneDist), 0 };
     P << pentries;
 
     if ( DEBUG ) {
@@ -254,6 +245,11 @@ void computePerspectiveMatrix(int id) {
     }
 
     display();
+}
+
+void refreshWindowAndPerspective(int id) {
+    computeWindowMatrix(id);
+    computePerspectiveMatrix(id);
 }
 
 void display(){
@@ -286,6 +282,8 @@ void display(){
     	     0, CubeSize, 0);
     drawLine(0, CubeSize, 0,
     	     0, 0, 0);
+    drawLine(CubeSize,0,CubeSize,
+	     CubeSize,CubeSize,0);
 
     drawLine(0, 0, CubeSize,
     	     CubeSize, 0, CubeSize);
@@ -336,31 +334,28 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
 	glVertex3f( p2[0], p2[1], p2[2] );
 	glEnd();
 
+	if ( DEBUG ) {
+	    // puts("-------------------- VIEW PIPELINE --------------------");
+	    // puts("Here is V:");
+	    // V.print();
+	    // puts("Here is P:");
+	    // P.print();
+	    // puts("And this is W:");
+	    // W.print();
+	    // puts("The pipeline, altogether:");
+	    // pipeline.print();
+
+	    // printf("Vb=%f, Vt=%f\n",
+	    // 	   Vb, Vt);
+
+	    puts("I AM DRAWING THIS LINE:");
+	    printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+	    printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
+	    m1.print();
+	    m2.print();
+	}
+
     }
-
-    // if ( DEBUG ) {
-    // 	static int pcounter = 0;
-    // 	pcounter = (pcounter+1)%50000;
-    // 	if ( !pcounter ) {
-    // 	    if ( DEBUG ) {
-    // 		puts("-------------------- VIEW PIPELINE --------------------");
-    // 		puts("Here is V:");
-    // 		V.print();
-    // 		puts("Here is P:");
-    // 		P.print();
-    // 		puts("And this is W:");
-    // 		W.print();
-    // 		puts("The pipeline, altogether:");
-    // 		pipeline.print();
-
-    // 		puts("I AM DRAWING THIS LINE:");
-    // 		printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-    // 		printf("(%f, %f, %f) -\n",p2[3],p2[4],p2[5]);
-    // 		m1.print();
-    // 		m2.print();
-    // 	    }
-    // 	}
-    // }
 
 }
 
@@ -425,22 +420,22 @@ int clip(float p1[3], float p2[3], direction d) {
     
     // Check if there is nothing to be clipped. If so, return.
     float normalDotV = (v*normal)(0,0);
-    if ( d == BOTTOM ) {
-	puts("normal:");
-	normal.print();
-	puts("v:");
-	v.print();
-	printf("Normal dotted with V is %f\n",normalDotV);
+    // if ( d == BOTTOM ) {
+    // 	puts("normal:");
+    // 	normal.print();
+    // 	puts("v:");
+    // 	v.print();
+    // 	printf("Normal dotted with V is %f\n",normalDotV);
 
-    }
+    // }
     if ( normalDotV == 0.0f ) return 1;
 
     // Get the clipped point
     float t = (D - (m0*normal)(0,0))/normalDotV;
-    printf("D=%f, normal (dot) p1=%f, normal (dot) V=%f\n",
-	   D,
-	   (normal*m0)(0,0),
-	   normalDotV);
+    // printf("D=%f, normal (dot) p1=%f, normal (dot) V=%f\n",
+    // 	   D,
+    // 	   (normal*m0)(0,0),
+    // 	   normalDotV);
     Matrix clippedPointVector = v*t + m0;
     float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
  
@@ -485,17 +480,17 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     }
 
-    if ( DEBUG ) {
-	static int pcounter = 0;
-	pcounter = (pcounter+1)%50001;
-//	if ( !pcounter ) {
-	    printf("Clipped point value: (%f,%f,%f)\n",
-		   clippedPoint[0],clippedPoint[1],clippedPoint[2]);
-	    puts("New line is, therefore ::::::::::::::::::::");
-	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
-	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
-//	}
-    }
+//     if ( DEBUG ) {
+// 	static int pcounter = 0;
+// 	pcounter = (pcounter+1)%50001;
+// //	if ( !pcounter ) {
+// 	    printf("Clipped point value: (%f,%f,%f)\n",
+// 		   clippedPoint[0],clippedPoint[1],clippedPoint[2]);
+// 	    puts("New line is, therefore ::::::::::::::::::::");
+// 	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
+// 	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
+// //	}
+//     }
     
     return 1;
 }
@@ -547,7 +542,14 @@ int main(int argc, char **argv) {
 
     new GLUI_Column(control_panel, true);
     GLUI_Rollout *clippingRollout = new GLUI_Rollout(control_panel, "Clipping Parameters", false);
-    GLUI_Spinner *thetaSpinner = new GLUI_Spinner(clippingRollout, "Theta", GLUI_SPINNER_FLOAT, &Theta, 0, computeWindowMatrix);
+    GLUI_Spinner *hitherDistRollout = new GLUI_Spinner(clippingRollout, "Hither", GLUI_SPINNER_FLOAT, &HitherPlaneDist, 0, computePerspectiveMatrix);
+    GLUI_Spinner *yonDistRollout = new GLUI_Spinner(clippingRollout, "Yon", GLUI_SPINNER_FLOAT, &YonPlaneDist, 0, computePerspectiveMatrix);
+    GLUI_Spinner *viewDistRollout = new GLUI_Spinner(clippingRollout, "View", GLUI_SPINNER_FLOAT, &ViewPlaneDist, 0, refreshWindowAndPerspective);
+    hitherDistRollout->set_float_limits(1.0f, 5.0f, GLUI_LIMIT_CLAMP);
+    viewDistRollout->set_float_limits(5.0f, 10.0f, GLUI_LIMIT_CLAMP);
+    yonDistRollout->set_float_limits(10.0f, 20.0f, GLUI_LIMIT_CLAMP);
+    
+    GLUI_Spinner *thetaSpinner = new GLUI_Spinner(control_panel, "Theta", GLUI_SPINNER_FLOAT, &Theta, 0, computeWindowMatrix);
     thetaSpinner->set_float_limits(0.0f, 360.0f, GLUI_LIMIT_WRAP);
     thetaSpinner->set_float_val(Theta);
  
