@@ -337,26 +337,26 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     	glVertex3f( p2[0], p2[1], p2[2] );
     	glEnd();
 
-    	// if ( DEBUG ) {
-    	//     // puts("-------------------- VIEW PIPELINE --------------------");
-    	//     // puts("Here is V:");
-    	//     // V.print();
-    	//     // puts("Here is P:");
-    	//     // P.print();
-    	//     // puts("And this is W:");
-    	//     // W.print();
-    	//     // puts("The pipeline, altogether:");
-    	//     // pipeline.print();
+    	if ( DEBUG ) {
+    	    // puts("-------------------- VIEW PIPELINE --------------------");
+    	    // puts("Here is V:");
+    	    // V.print();
+    	    // puts("Here is P:");
+    	    // P.print();
+    	    // puts("And this is W:");
+    	    // W.print();
+    	    // puts("The pipeline, altogether:");
+    	    // pipeline.print();
 
-    	//     // printf("Vb=%f, Vt=%f\n",
-    	//     // 	   Vb, Vt);
+    	    // printf("Vb=%f, Vt=%f\n",
+    	    // 	   Vb, Vt);
 
-    	//     puts("I AM DRAWING THIS LINE:");
-    	//     printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-    	//     printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
-    	//     m1.print();
-    	//     m2.print();
-    	// }
+    	    puts("I AM DRAWING THIS LINE:");
+    	    printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
+    	    printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
+    	    m1.print();
+    	    m2.print();
+    	}
 
     }
 
@@ -434,7 +434,7 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     case HITHER:
     {
-	if ( p1[2] < HitherPlaneDist && p2[2] < HitherPlaneDist ) {
+	if ( p1[2] < /*(HitherPlaneDist*/ 0 && p2[2] < /*HitherPlaneDist*/ 0 ) {
 	    puts("Clipping on the front!");
 	    printf("p1z=%f, p2z=%f\n",
 		   p1[2], p2[2]);
@@ -442,12 +442,12 @@ int clip(float p1[3], float p2[3], direction d) {
 	    return 0;
 	}
 	normal_entries[2] = 1;
-	D = HitherPlaneDist;
+	D = /*HitherPlaneDist;*/ 0;
     }
         break;
     case YON:
     {
-	if ( p1[2] > YonPlaneDist && p2[2] > YonPlaneDist) {
+	if ( p1[2] > 1/*YonPlaneDist*/ && p2[2] > 1/*YonPlaneDist*/) {
 	    return 0;
 	}
 	normal_entries[2] = 1;
@@ -506,20 +506,32 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     case HITHER:
     {
-	if ( p1[2] < HitherPlaneDist ) {
+	// if ( p1[2] < HitherPlaneDist ) {
+	//     std::copy(clippedPoint, clippedPoint+3, p1);
+	// } else if ( p2[2] < HitherPlaneDist ) {
+	//     std::copy(clippedPoint, clippedPoint+3, p2);
+	// }
+	if ( p1[2] < 0 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
-	} else if ( p2[2] < HitherPlaneDist ) {
+	} else if ( p2[2] < 0 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p2);
 	}
+
     }
 	break;
     case YON:
     {
-	if ( p1[2] > YonPlaneDist ) {
+	// if ( p1[2] > YonPlaneDist ) {
+	//     std::copy(clippedPoint, clippedPoint+3, p1);
+	// } else if ( p2[2] > YonPlaneDist ) {
+	//     std::copy(clippedPoint, clippedPoint+3, p2);
+	// }
+	if ( p1[2] > 1 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
-	} else if ( p2[2] > YonPlaneDist ) {
+	} else if ( p2[2] > 1 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p2);
 	}
+
     }
 	break;
     }
