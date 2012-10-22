@@ -23,12 +23,14 @@ int WhichSides;
 int WhichSpeed;
 GLfloat Theta = 40.0f;
 GLfloat CubeSize = 3.0f;
-GLfloat EyePosX, EyePosY, EyePosZ;
+GLfloat EyePosX = 5.0f;
+GLfloat EyePosY = 5.0f;
+GLfloat EyePosZ = 2.5f;
 GLfloat LookAtX, LookAtY, LookAtZ;
 GLfloat Wl, Wr, Wt, Wb, Vl, Vr, Vt, Vb;
 GLfloat Ax, Bx, Cx, Ay, By, Cy, Az, Bz, Cz;
 GLfloat ViewPlaneDist = 10.0f;
-GLfloat HitherPlaneDist = 5.0f;
+GLfloat HitherPlaneDist = 2.0f;
 GLfloat YonPlaneDist = 15.0f;
 
 /* matrix transforms */
@@ -64,9 +66,6 @@ void setupViewport(int w, int h) {
     Wt = 0;
     Wl = 0;
 
-    if ( DEBUG )
-	printf("Wl=%f, Wr=%f, Wb=%f, Wt=%f\n", Wl, Wr, Wb, Wt);
-    
     gluOrtho2D(Wl, Wr, Wt, Wb);
 
     /* Recompute W matrix */
@@ -93,7 +92,6 @@ void init() {
     setupViewport(INITIAL_WIDTH, INITIAL_HEIGHT);
 
     LookAtX = LookAtY = LookAtZ = 0.0f;
-    EyePosX = EyePosY = EyePosZ = 10.0f;
 
     /***** initialize matrix transforms *****/
  
@@ -158,14 +156,14 @@ void computeViewerAngle(int id) {
     Bz = LookAtY - EyePosY;
     Cz = LookAtZ - EyePosZ;
 
-    // Since the UP vector doesn't chance, we'll use that as the parallel y-vector
-    Ay = 0;
-    By = 0;
-    Cy = 1;	// why is the z-component 1???
+    // The up-vector
+    GLfloat UPA = 0;
+    GLfloat UPB = 0;
+    GLfloat UPC = 1;
 
     // x-vector is cross-product of Z and UP vectors
     float zvector[] = { Az, Bz, Cz };
-    float upvector[] = { Ay, By, Cy };
+    float upvector[] = { UPA, UPB, UPC };
     float *xvector = crossProduct(zvector, upvector);
  
     Ax = xvector[0];
@@ -180,11 +178,6 @@ void computeViewerMatrix(int id) {
     float r = sqrt(Ax*Ax + Bx*Bx);
     float R = sqrt(Ax*Ax + Bx*Bx + Cx*Cx);
     float h = r*sqrt(Az*Az + Bz*Bz + Cz*Cz);
-
-    if ( DEBUG ) {
-	printf("Az=%f, Bz=%f, Cz=%f\n",Az,Bz,Cz);
-	printf("r=%f, R=%f, h=%f\n",r,R,h);
-    }
 
     TranslateToViewer(3,0) = -EyePosX;
     TranslateToViewer(3,1) = -EyePosY;
@@ -233,11 +226,6 @@ void computePerspectiveMatrix(int id) {
 			 0, 0, -HitherPlaneDist*YonPlaneDist/(YonPlaneDist-HitherPlaneDist), 0 };
     P << pentries;
 
-    if ( DEBUG ) {
-	puts("New perspective matrix:");
-	P.print();
-    }
-
     display();
 }
 
@@ -277,7 +265,7 @@ void display(){
     	     0, 0, 0);
     glColor3f(1.0,0.3,0.0);
     drawLine(CubeSize,0,CubeSize,
-	     CubeSize,CubeSize,0);
+    	     CubeSize,CubeSize,0);
 
     glColor3f(0.0,1.0,0.0);
     drawLine(0, 0, CubeSize,
@@ -291,13 +279,13 @@ void display(){
 
     glColor3f(0.0,1.0,1.0);
     drawLine(0, 0, 0,
-	     0, 0, CubeSize);
+    	     0, 0, CubeSize);
     drawLine(CubeSize, 0, 0,
-	     CubeSize, 0, CubeSize);
+    	     CubeSize, 0, CubeSize);
     drawLine(CubeSize, CubeSize, 0,
-	     CubeSize, CubeSize, CubeSize);
+    	     CubeSize, CubeSize, CubeSize);
     drawLine(0, CubeSize, 0,
-	     0, CubeSize, CubeSize);
+    	     0, CubeSize, CubeSize);
 
     glutSwapBuffers();
 
@@ -313,11 +301,7 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     m2 << m2_entries;
     
     Matrix pipeline = V * P * W;
-
-    puts("MOVED POINTS ----------------------------------------");
-    (m1*pipeline).print();
-    (m2*pipeline).print();
-
+ 
     m1 = Matrix::Homogenize(m1*pipeline);
     m2 = Matrix::Homogenize(m2*pipeline);
 
@@ -333,33 +317,10 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     	 clip(p1, p2, YON) ) {
 
     	glBegin(GL_LINES);
-    	glVertex3f( p1[0], p1[1], p1[2] );
-    	glVertex3f( p2[0], p2[1], p2[2] );
+    	glVertex2f( p1[0], p1[1] );
+	glVertex2f( p2[0], p2[1] );
     	glEnd();
-
-    	if ( DEBUG ) {
-    	    // puts("-------------------- VIEW PIPELINE --------------------");
-    	    // puts("Here is V:");
-    	    // V.print();
-    	    // puts("Here is P:");
-    	    // P.print();
-    	    // puts("And this is W:");
-    	    // W.print();
-    	    // puts("The pipeline, altogether:");
-    	    // pipeline.print();
-
-    	    // printf("Vb=%f, Vt=%f\n",
-    	    // 	   Vb, Vt);
-
-    	    puts("I AM DRAWING THIS LINE:");
-    	    printf("(%f, %f, %f) -\n",p1[0],p1[1],p1[2]);
-    	    printf("(%f, %f, %f)\n",p2[0],p2[1],p2[2]);
-    	    m1.print();
-    	    m2.print();
-    	}
-
     }
-
 }
 
 float len(float p1[3], float p2[3]) {
@@ -372,9 +333,9 @@ float len(float p1[3], float p2[3]) {
 /*
  * clip
  *
- * Takes six floats by reference. clip will change these values to be ones that
- * are clipped within the viewport, hither, and yon planes. Returns 1 if the line
- * is clipped entirely.
+ * Takes two 3-arrays by reference. clip will change these values to be ones that
+ * are clipped within the viewport, hither, and yon planes. Returns 0 if the line
+ * is clipped entirely, 1 otherwise.
  * */
 int clip(float p1[3], float p2[3], direction d) {
     Matrix normal(3,1);
@@ -410,13 +371,8 @@ int clip(float p1[3], float p2[3], direction d) {
     case LEFT:
     {
 	if ( p1[0] < VIEWPORT_MARGIN && p2[0] < VIEWPORT_MARGIN ) {
-	    puts("Clipping on the left!");
-	    printf("p1x=%f, p2x=%f\n",
-		   p1[0], p2[0]);
 	    return 0;
 	}
-	printf("Letting this one slide (LEFT)::::\np1x=%f,p2x=%f\n",
-	       p1[0],p2[0]);
 	normal_entries[0] = 1;
 	D = VIEWPORT_MARGIN;
     }
@@ -426,32 +382,26 @@ int clip(float p1[3], float p2[3], direction d) {
 	if ( p1[0] > Wr - VIEWPORT_MARGIN && p2[0] > Wr - VIEWPORT_MARGIN ) {
 	    return 0;
 	}
-	printf("Letting this one slide (RIGHT)::::\np1x=%f,p2x=%f\n",
-	       p1[0],p2[0]);
 	normal_entries[0] = 1;
 	D = Wr - VIEWPORT_MARGIN;
     }
 	break;
     case HITHER:
     {
-	if ( p1[2] < /*(HitherPlaneDist*/ 0 && p2[2] < /*HitherPlaneDist*/ 0 ) {
-	    puts("Clipping on the front!");
-	    printf("p1z=%f, p2z=%f\n",
-		   p1[2], p2[2]);
-
+	if ( p1[2] < 0 && p2[2] < 0 ) {
 	    return 0;
 	}
 	normal_entries[2] = 1;
-	D = /*HitherPlaneDist;*/ 0;
+	D = 0;
     }
         break;
     case YON:
     {
-	if ( p1[2] > 1/*YonPlaneDist*/ && p2[2] > 1/*YonPlaneDist*/) {
+	if ( p1[2] > 1 && p2[2] > 1) {
 	    return 0;
 	}
 	normal_entries[2] = 1;
-	D = YonPlaneDist;
+	D = 1;
     }
 	break;
     }
@@ -464,7 +414,9 @@ int clip(float p1[3], float p2[3], direction d) {
     // Get the clipped point
     float t = (D - (m0*normal)(0,0))/normalDotV;
     Matrix clippedPointVector = v*t + m0;
-    float clippedPoint[3] = { clippedPointVector(0,0), clippedPointVector(0,1), clippedPointVector(0,2) };
+    float clippedPoint[3] = { clippedPointVector(0,0),
+			      clippedPointVector(0,1),
+			      clippedPointVector(0,2) };
  
     // We assume that at least part of the line is visible here.
     switch ( d ) {
@@ -506,11 +458,6 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     case HITHER:
     {
-	// if ( p1[2] < HitherPlaneDist ) {
-	//     std::copy(clippedPoint, clippedPoint+3, p1);
-	// } else if ( p2[2] < HitherPlaneDist ) {
-	//     std::copy(clippedPoint, clippedPoint+3, p2);
-	// }
 	if ( p1[2] < 0 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
 	} else if ( p2[2] < 0 ) {
@@ -521,11 +468,6 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     case YON:
     {
-	// if ( p1[2] > YonPlaneDist ) {
-	//     std::copy(clippedPoint, clippedPoint+3, p1);
-	// } else if ( p2[2] > YonPlaneDist ) {
-	//     std::copy(clippedPoint, clippedPoint+3, p2);
-	// }
 	if ( p1[2] > 1 ) {
 	    std::copy(clippedPoint, clippedPoint+3, p1);
 	} else if ( p2[2] > 1 ) {
@@ -536,52 +478,6 @@ int clip(float p1[3], float p2[3], direction d) {
 	break;
     }
 
-    // if ( len(p1,p2) > 1000 ) {
-    // 	puts("||||||||||||||||||||||||||||||");
-    // 	printf("This is an awfully long line...\n(%f,%f,%f) - (%f,%f,%f)\n",
-    // 	       p1[0],p1[1],p1[2],
-    // 	       p2[0],p2[1],p2[2]);
-
-    // 	puts("Printing parallel x-vector to viewer:");
-    // 	printf("Ax=%f\nBx=%f\nCx=%f\n",
-    // 	       Ax,Bx,Cx);
-
-    // 	puts("Translation:");
-    // 	TranslateToViewer.print();
-    // 	puts("Rot1:");
-    // 	Rotate1.print();
-    // 	puts("Rot2:");
-    // 	Rotate2.print();
-    // 	puts("Rot3:");
-    // 	Rotate3.print();
-    // 	puts("FH:");
-    // 	FlipHandedness.print();
-    // 	puts("V:");
-    // 	V.print();
-    // 	puts("P:");
-    // 	P.print();
-    // 	puts("W:");
-    // 	W.print();
-
-    // 	Matrix pipeline = V*P*W;
-    // 	puts("The pipeline:");
-    // 	pipeline.print();
-
-    // 	puts("------------------------------");
-    // }
-
-//     if ( DEBUG ) {
-// 	static int pcounter = 0;
-// 	pcounter = (pcounter+1)%50001;
-// //	if ( !pcounter ) {
-// 	    printf("Clipped point value: (%f,%f,%f)\n",
-// 		   clippedPoint[0],clippedPoint[1],clippedPoint[2]);
-// 	    puts("New line is, therefore ::::::::::::::::::::");
-// 	    printf("(%f,%f,%f)\n", p1[0],p1[1],p1[2]);
-// 	    printf("(%f,%f,%f)\n", p2[0],p2[1],p2[2]);
-// //	}
-//     }
-    
     return 1;
 }
 
