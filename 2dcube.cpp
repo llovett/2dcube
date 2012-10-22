@@ -300,14 +300,24 @@ void drawLine(float x1, float y1, float z1, float x2, float y2, float z2) {
     float m2_entries[] = { x2, y2, z2, 1 };
     m2 << m2_entries;
     
-    Matrix pipeline = V * P * W;
+    Matrix pipeline = P * W;
  
+    // Get rid of annoying lines when cube is out-of-sight
+    m1 = m1 * V;
+    m2 = m2 * V;
+    if (! (m1(0,2) > 0 && m2(0,2) > 0) ) {
+	return;
+    }
+
+    // Multiply vertices by the rest of the pipeline
     m1 = Matrix::Homogenize(m1*pipeline);
     m2 = Matrix::Homogenize(m2*pipeline);
 
     // Draw the line, if it doesn't clip off the screen
-    float p1[3] = { m1(0,0), m1(0,1), m1(0,2) };
-    float p2[3] = { m2(0,0), m2(0,1), m2(0,2) };
+    float p1[3];
+    float p2[3];
+    for ( int i=0; i<3; i++ ) p1[i] = m1(0,i);
+    for ( int i=0; i<3; i++ ) p2[i] = m2(0,i);
 
     if ( clip(p1, p2, TOP) &&
     	 clip(p1, p2, BOTTOM) &&

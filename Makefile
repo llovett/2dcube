@@ -1,4 +1,4 @@
-FLAGS = -I/usr/include/GL
+FLAGS = -I/usr/include/GL -g
 LIBS = -L/usr/include -lglut -lglui -lGLU -lGL -lm
 
 APPS = 2dcube
